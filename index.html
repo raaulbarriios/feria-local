@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Panel de Administración Privado</title>
+    <!-- Vinculación de fuentes tipográficas oficiales (Inter) y pack de iconos Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- Hoja de estilos del panel de administración -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Import Map para carga modular estructurada del SDK de Firebase via CDN -->
+    <script type="importmap">
+      {
+        "imports": {
+          "firebase/app": "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js",
+          "firebase/analytics": "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js",
+          "firebase/firestore": "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js",
+          "firebase/auth": "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js"
+        }
+      }
+    </script>
+</head>
+<body class="admin-body">
+
+    <!-- ==========================================================================
+         SECCIÓN 1: FORMULARIO DE ACCESO EXCLUSIVO SUPERADMINISTRADOR
+         ========================================================================== -->
+    <div id="loginSection">
+        <!-- Cabecera Institucional -->
+        <header class="adminHeader">
+            <div class="adminHeaderLogo"><img src="fotos/Logo algeciras color blanco texto derecha.png" alt="Ayuntamiento de Algeciras"></div>
+            <div class="adminHeaderActions"></div>
+        </header>
+        
+        <!-- Formulario central de credenciales de administrador -->
+        <main class="authBody">
+            <div class="authCard">
+                <img src="fotos/Logo Algeciras 1 tinta fondos claros ver azul sin letras interiores.png" alt="Logo" class="authLogo">
+                <h1>Admin Login</h1>
+                <p>Sistema de gestión exclusivo</p>
+                
+                <!-- Paso A: Login con credenciales -->
+                <form id="adminLoginForm">
+                    <div class="formGroup">
+                        <label>Correo Electrónico</label>
+                        <input type="email" id="userInput" placeholder="tucorreo@gmail.com" required>
+                    </div>
+                    <div class="formGroup">
+                        <label>Contraseña</label>
+                        <input type="password" id="passInput" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btnSubmit">ACCEDER AL PANEL</button>
+                    <!-- Alertas de error de acceso -->
+                    <p id="errorBox" class="errorMsg"></p>
+                </form>
+
+                <!-- Paso B: Validación reforzada 2FA para Superadministrador -->
+                <form id="admin2faForm" class="hidden">
+                    <p style="color: #64748b; font-size: 0.9rem; text-align: center; margin-bottom: 20px; line-height: 1.4;">
+                        Hemos enviado un código de verificación de 6 dígitos a tu correo. Por favor, introdúcelo para continuar.
+                    </p>
+                    <div class="formGroup">
+                        <label>Código de Verificación</label>
+                        <input type="text" id="twoFactorInput" placeholder="••••••" maxlength="6" pattern="\d{6}" style="text-align: center; font-size: 1.6rem; letter-spacing: 8px; font-weight: 700; height: 50px; background-color: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; width: 100%; box-sizing: border-box;" required>
+                    </div>
+                    <button type="submit" class="btnSubmit">VERIFICAR CÓDIGO</button>
+                    <p id="error2faBox" class="errorMsg"></p>
+                    <!-- Enlaces secundarios del 2FA -->
+                    <div style="display: flex; justify-content: space-between; margin-top: 18px; font-size: 0.85rem;">
+                        <span id="resend2faBtn" style="color: #1e3a8a; cursor: pointer; font-weight: 600; text-decoration: underline;">Reenviar Código</span>
+                        <span id="backToLoginBtn" style="color: #64748b; cursor: pointer; font-weight: 600; text-decoration: underline;">Volver al Login</span>
+                    </div>
+                </form>
+            </div>
+        </main>
+        
+        <!-- Pie de página Institucional -->
+        <footer class="adminFooter" role="contentinfo">
+            <div class="footerContent">
+                <div class="footerLeft">
+                    <img src="fotos/Logo Algeciras 1 tinta fondos oscuros.png" alt="Ayuntamiento de Algeciras" class="footerIcon">
+                    <span class="footerHandle">ayuntamientoalgeciras</span>
+                </div>
+                <div class="copyrightText">© Ayuntamiento de Algeciras</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ==========================================================================
+         SECCIÓN 2: PANEL DE CONTROL DE ADMINISTRACIÓN GLOBAL (DASHBOARD)
+         Activo tras validar el acceso de superusuario Firebase.
+         ========================================================================== -->
+    <div id="panelSection" class="hidden">
+        <!-- Cabecera de Administración con botón de Desconexión Segura -->
+        <header class="adminHeader">
+            <div class="adminHeaderLogo"><img src="fotos/Logo algeciras color blanco texto derecha.png" alt="Ayuntamiento de Algeciras"></div>
+            <div class="adminHeaderTitle"><h1>Administración</h1></div>
+            <div class="adminHeaderActions">
+                <button id="logoutBtn" class="logoutBtn" title="Cerrar Sesión" aria-label="Cerrar Sesión"><i class="fas fa-power-off"></i> <span class="logoutText">SALIR</span></button>
+            </div>
+        </header>
+
+        <!-- Contenido Multitarea del Administrador -->
+        <main class="panelMain">
+            <div class="adminCard">
+                <!-- Selector Superior de Pestañas de Control -->
+                <div class="admin-tabs">
+                    <button type="button" id="tabAdminCreds" class="admin-tab-btn active" data-mobile="Creds"><i class="fas fa-key"></i> <span class="tab-text">Credenciales</span></button>
+                    <button type="button" id="tabAdminInfo" class="admin-tab-btn disabled" data-mobile="Editar"><i class="fas fa-edit"></i> <span class="tab-text">Editar</span></button>
+                    <button type="button" id="tabAdminTags" class="admin-tab-btn" data-mobile="Etiquetas"><i class="fas fa-tags"></i> <span class="tab-text">Etiquetas</span></button>
+                </div>
+                
+                <!-- Pestaña A: Control y creación de credenciales y activación en el Mapa -->
+                <div id="tabContentCreds" class="tab-content active">
+                    <h2>Gestión de Acceso</h2>
+                    <form id="managementForm">
+                        <div class="formGrid">
+                            <div class="formGroup">
+                                <label>Nº de Caseta</label>
+                                <input type="text" id="numCaseta" placeholder="Ej: 54" required>
+                            </div>
+                            <div class="formGroup">
+                                <label>Nombre de la Caseta</label>
+                                <input type="text" id="nombreCaseta" placeholder="Nombre completo">
+                            </div>
+                            <div class="formGroup">
+                                <label>Correo del Propietario</label>
+                                <input type="email" id="correo" placeholder="ejemplo@correo.com">
+                            </div>
+                            <div class="formGroup">
+                                <label>Contraseña</label>
+                                <input type="text" id="password" placeholder="Contraseña de acceso">
+                            </div>
+                        </div>
+                        <!-- Botones de activación / desactivación física sobre el SVG -->
+                        <div class="btnRow">
+                            <button type="button" id="enableAction" class="btn btnEnable"><i class="fas fa-check-circle"></i> HABILITAR</button>
+                            <button type="button" id="disableAction" class="btn btnDisable"><i class="fas fa-times-circle"></i> DESHABILITAR</button>
+                        </div>
+                        <!-- Registro de accesos usando la API Cloudflare Worker -->
+                        <div class="btnRow" style="margin-top: 12px;">
+                            <button type="button" id="saveAction" class="btn btnSave"><i class="fas fa-sync-alt"></i> ACTUALIZAR</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Pestaña B: Edición de Información Detallada, Agenda y Foto de Caseta -->
+                <div id="tabContentInfo" class="tab-content">
+                    <h2>Editar Información de la Caseta</h2>
+                    <form id="editForm">
+                        <div class="formGrid">
+                            <!-- Tags asignados a la caseta en edición -->
+                            <div class="formGroup full-width">
+                                <label>Etiquetas de la Caseta</label>
+                                <div class="tags-container" id="tagsContainer">
+                                    <!-- Badges interactivos generados desde JS -->
+                                </div>
+                                <input type="hidden" id="panelEtiquetas" value="">
+                            </div>
+                            
+                            <!-- Carga y Comprobación de Proporción Horizontal de Imagen de Portada -->
+                            <div class="formGroup full-width">
+                                <label style="text-transform: uppercase; font-weight: bold; color: var(--admin-primary); margin-bottom: 8px; display: block;">Imagen de la Caseta</label>
+                                <span style="font-size: 0.8rem; color: #64748b; margin-top: -4px; margin-bottom: 8px; display: block; width: 100%; max-width: 100%; box-sizing: border-box; word-break: break-word; white-space: normal;"><i class="fas fa-info-circle" style="color: #0b63a5; margin-right: 4px;"></i> Por favor, sube una imagen en formato <strong>horizontal</strong> (apaisada). Las fotos en formato vertical no están permitidas.</span>
+                                <div class="image-upload-wrapper" style="position:relative; display:flex; flex-direction:column;">
+                                    <div class="inputWrapper" style="position:relative; margin:0; border:1px solid var(--admin-primary); border-radius:8px; background:#fff; z-index:2; padding:2px;">
+                                        <input type="file" id="panelImagen" class="inputControl" accept="image/*" style="padding-left:40px; border:none; background:transparent; width:100%;">
+                                        <i class="fas fa-image" style="position:absolute;left:18px;top:50%;transform:translateY(-50%);color:var(--admin-primary);"></i>
+                                    </div>
+                                    <button type="button" id="eliminarImagenBtn" class="btn-eliminar-imagen" style="display:none; border-top-left-radius:0; border-top-right-radius:0; margin-top:-4px; z-index:1; position:relative;">
+                                        ELIMINAR
+                                    </button>
+                                </div>
+                                <img id="imagenPreview" src="" alt="Vista previa" style="display:none; max-width:100%; margin-top:10px; border-radius:10px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                            </div>
+                            
+                            <!-- Caja de Texto: Descripción Detallada -->
+                            <div class="formGroup full-width">
+                                <label>Descripción</label>
+                                <div class="inputWrapper" style="position:relative;">
+                                    <textarea id="panelDescripcion" class="inputControl" style="resize:vertical;min-height:80px;padding:10px 10px 10px 40px;width:100%;background:#f8fafc;border:2px solid transparent;border-radius:8px;outline:0;font-family:Inter,sans-serif;font-size:.9rem;font-weight:500;transition:.3s cubic-bezier(.4,0,.2,1);"></textarea>
+                                    <i class="fas fa-align-left" style="position:absolute;left:15px;top:15px;color:var(--admin-primary);"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Editor Completo de Eventos y Agenda (Soporte Día 20 a Día 28) -->
+                            <div class="formGroup full-width">
+                                <label>Programación de Eventos</label>
+                                <div class="schedule-editor" id="scheduleEditor">
+                                    <!-- Grid Premium de pestañas de días -->
+                                    <div id="modal-dia-tabs" class="modal-dia-tabs" style="margin-bottom: 15px;"></div>
+                                    <div id="scheduleList" class="schedule-list">
+                                        <!-- Listado de eventos del día seleccionado -->
+                                    </div>
+                                    <!-- Inserción rápida de eventos locales -->
+                                    <div class="schedule-add-form">
+                                        <div class="schedule-add-fields">
+                                            <div class="inputWrapper" style="position:relative;">
+                                                <input type="text" id="addEventHora" class="inputControl" placeholder="Hora (ej: 14:00)" style="padding-left:40px;">
+                                                <i class="fas fa-clock" style="position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--admin-primary);"></i>
+                                            </div>
+                                            <div class="inputWrapper">
+                                                <input type="text" id="addEventActividad" class="inputControl" placeholder="Actividad (ej: Comida)">
+                                            </div>
+                                        </div>
+                                        <button type="button" id="addEventBtn" class="add-event-btn"><i class="fas fa-plus"></i> Añadir Evento</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Guarda los datos editados directamente en Firestore -->
+                        <div class="btnRow" style="margin-top: 20px;">
+                            <button type="submit" class="btn btnSave" id="panelSaveBtn" style="font-size:0.95rem;padding:12px;"><i class="fas fa-save"></i> GUARDAR INFORMACIÓN</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Pestaña C: Configuración de la Lista de Etiquetas Globales de la Feria -->
+                <div id="tabContentTags" class="tab-content">
+                    <h2>Etiquetas Predefinidas de la Feria</h2>
+                    <p style="color: var(--admin-text-muted); font-size: 0.9rem; margin-bottom: 20px;">
+                        Añade, edita o elimina las etiquetas que estarán disponibles globalmente para todas las casetas de la feria.
+                    </p>
+                    
+                    <!-- Contenedor general de etiquetas activas de la BD -->
+                    <div class="formGroup full-width" style="margin-bottom: 20px;">
+                        <label>Etiquetas</label>
+                        <div id="credsTagsList" class="tags-container" style="max-height: 250px; overflow-y: auto;">
+                            <!-- Listado dinámico de etiquetas -->
+                        </div>
+                    </div>
+
+                    <!-- Añadir nueva etiqueta global -->
+                    <div class="schedule-editor" style="margin-top: 15px;">
+                        <div class="schedule-add-form" style="border-top: none; padding-top: 0;">
+                            <div class="schedule-add-fields" style="grid-template-columns: 1fr;">
+                                <div class="inputWrapper" style="position:relative; margin: 0; width: 100%;">
+                                    <input type="text" id="newTagName" class="inputControl" placeholder="Nombre de la nueva etiqueta (ej: Tradicional)" style="padding-left:40px; height: 42px;">
+                                    <i class="fas fa-tag" style="position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--admin-primary);"></i>
+                                </div>
+                            </div>
+                            <button type="button" id="addTagBtn" class="add-event-btn"><i class="fas fa-plus"></i> Añadir Etiqueta</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Botón para guardar las modificaciones globales de tags -->
+                    <div class="btnRow" style="margin-top: 20px;">
+                        <button type="button" id="saveGlobalTagsAction" class="btn btnSave" style="font-size:0.95rem;padding:12px;"><i class="fas fa-save"></i> GUARDAR ETIQUETAS</button>
+                    </div>
+                </div>
+                
+                <!-- Notificación flotante de estado única compartida -->
+                <div id="statusBox" class="statusNotif"></div>
+            </div>
+        </main>
+        
+        <!-- Pie de Página Institucional del Panel -->
+        <footer class="adminFooter" role="contentinfo">
+            <div class="footerContent">
+                <div class="footerLeft">
+                    <img src="fotos/Logo Algeciras 1 tinta fondos oscuros.png" alt="Ayuntamiento de Algeciras" class="footerIcon">
+                    <span class="footerHandle">ayuntamientoalgeciras</span>
+                </div>
+                <div class="copyrightText">© Ayuntamiento de Algeciras</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Carga inicial del script de lógica JS de administración -->
+    <script type="module" src="script.js?v=7"></script>
+</body>
+</html>
