@@ -278,8 +278,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!userSnap.empty) {
                         corIn.value = userSnap.docs[0].data().email || '';
                     } else {
-                        const oid = d.ownerId || '';
-                        corIn.value = (oid && oid.includes('@')) ? oid : ''; corIn.placeholder = "ejemplo@correo.com";
+                        corIn.value = ''; corIn.placeholder = "ejemplo@correo.com";
                     }
                 } catch (err) {
                     corIn.value = ''; corIn.placeholder = "Error al buscar propietario";
@@ -379,8 +378,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
 
-            // Actualiza la vinculación de propietario y limpia rastros legados de ownerEmail en el documento de feria
-            await setDoc(doc(db, "feria", normalizeId(num)), { nombre: nom, ownerId: cor, ownerEmail: deleteField() }, { merge: true });
+            // Actualiza la vinculación de propietario y limpia rastros legados de ownerEmail y ownerId en el documento de feria
+            await setDoc(doc(db, "feria", normalizeId(num)), { nombre: nom, ownerId: deleteField(), ownerEmail: deleteField() }, { merge: true });
             
             showStatus(pass ? "Caseta y Usuario creados correctamente" : "Actualizado", "success"); 
             passIn.value = '';

@@ -258,7 +258,7 @@
     <!-- Integración del SDK de Firebase via CDN -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDocs, collection, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDocs, collection, query, where, deleteDoc, deleteField } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
         import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -359,8 +359,8 @@
                     email: email
                 });
 
-                log(`✍️ Actualizando 'ownerId' en el documento de la feria ('feria/${casetaId}')...`);
-                await setDoc(doc(db, "feria", casetaId), { ownerId: email }, { merge: true });
+                log(`✍️ Eliminando 'ownerId' de la colección feria ('feria/${casetaId}')...`);
+                await setDoc(doc(db, "feria", casetaId), { ownerId: deleteField() }, { merge: true });
 
                 log(`🎉 ¡Usuario creado y vinculado correctamente a la caseta ${casetaId}!`, "success");
             } catch (err) {
@@ -429,9 +429,9 @@
                             email: email
                         });
 
-                        // Vincular en feria
-                        await setDoc(doc(db, "feria", casetaId), { ownerId: email }, { merge: true });
-                        log(`  └─ Firestore: Vinculado a caseta ${casetaId}`, "success");
+                        // Asegurar que no quede ownerId en feria
+                        await setDoc(doc(db, "feria", casetaId), { ownerId: deleteField() }, { merge: true });
+                        log(`  └─ Firestore: Limpiado ownerId en 'feria/${casetaId}'`, "success");
 
                     } catch (err) {
                         if (err.code === 'auth/email-already-in-use') {
