@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feria de Algeciras</title>
+    <link rel="icon" type="image/png"
+        href="fotos/Logo%20Algeciras%201%20tinta%20fondos%20oscuros%20sin%20letras%20interiores.png">
+    
+    <!-- Conexión a las fuentes oficiales (Inter) y los iconos de Font Awesome -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- Estilos de maquetación pública con clave de cache-busting para forzar actualizaciones de hojas de estilo -->
+    <link rel="stylesheet" href="style.css?v=1.1.3">
+</head>
+
+<body>
+    <!-- ==========================================================================
+         CABECERA GENERAL Y BARRA DE BÚSQUEDA / ACCIONES DE FILTRADO
+         ========================================================================== -->
+    <header class="mainHeader" role="banner">
+        <div class="headerContent">
+            <div class="headerTopRow">
+                <!-- Logotipo Oficial del Ayuntamiento -->
+                <div class="logoContainer"><img src="fotos/Logo algeciras color blanco texto derecha.png"
+                        alt="Ayuntamiento de Algeciras" class="mainLogoImg"></div>
+                
+                <!-- Acciones Rápidas en Móviles: Despliegue de búsqueda rápida -->
+                <div class="mobileActions">
+                    <button id="toggleMobileSearch" class="mobileBtn" aria-expanded="false"><i
+                            class="fas fa-search"></i><span>Buscar</span></button>
+                </div>
+                
+                <!-- Barra de Búsqueda y Enlaces Directos en Escritorio (Desktop) -->
+                <div class="desktopHeaderActions">
+                    <div class="headerActionsWrapper">
+                        <div class="searchContainer">
+                            <input type="text" id="manualSearch" class="searchInput" placeholder="Texto a buscar">
+                            <button id="searchTrigger" class="searchBtn"><i class="fas fa-search"></i> <span
+                                    class="searchBtnText">Buscar</span></button>
+                        </div>
+                        <div class="headerLinksRow">
+                            <button id="tagsTriggerDesktop" class="casetas-trigger-btn tags-filter-btn"><i
+                                    class="fas fa-tags"></i><span>Filtros</span></button>
+                            <button id="casetasTriggerDesktop" class="casetas-trigger-btn"><i
+                                    class="fas fa-store"></i><span>Casetas</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Barra de Búsqueda Flotante para Dispositivos Móviles -->
+            <div id="mobileSearchRow" class="searchRowMobile" aria-hidden="true">
+                <div class="searchInlineBox">
+                    <input type="text" id="mobileSearchInput" placeholder="Texto a buscar">
+                    <button id="mobileSearchAction" class="mobileSearchActionBtn"><i class="fas fa-search"></i>
+                        Buscar</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==========================================================================
+         TÍTULO DEL EVENTO Y BOTONES DE CONTROL DE CAJONES LATERALES EN MÓVILES
+         ========================================================================== -->
+    <section class="eventTitleSection">
+        <h1 class="eventTitle">Feria Real de Algeciras 2026</h1>
+        <div class="mobile-nav-buttons-row">
+            <button id="tagsTriggerMobile" class="casetas-trigger-btn tags-filter-btn" type="button"><i class="fas fa-tags"></i><span>Filtros</span></button>
+            <button id="casetasTriggerMobile" class="casetas-trigger-btn" type="button"><i class="fas fa-store"></i><span>Casetas</span></button>
+            <button id="eventsTriggerMobile" class="casetas-trigger-btn" type="button"><i class="fas fa-calendar-alt"></i><span>Eventos</span></button>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         SECCIÓN PRINCIPAL: PLANO INTERACTIVO Y MENÚS DESLIZANTES
+         ========================================================================== -->
+    <main class="mapWrapper">
+        <!-- Lienzo del Plano de Casetas (Soporta Zoom y Pan con la librería Panzoom) -->
+        <div class="mapImageContainer">
+            <div class="mapContent">
+                <!-- Capa inferior: Imagen SVG base del plano -->
+                <img src="fotos/path100.svg" alt="Mapa interactivo del evento" class="mapImage">
+                <!-- Capa superior interactiva: Polígonos SVG dinámicos enlazados a Firebase -->
+                <svg id="eventMap" viewBox="0 0 930 1100" preserveAspectRatio="none" class="mapSvgOverlay"></svg>
+            </div>
+        </div>
+        
+        <!-- Cajón Izquierdo: Directorio general e indexado de Casetas de la Feria -->
+        <aside id="sidePanelLeft" class="side-panel side-panel-left" aria-hidden="true">
+            <div class="side-panel-header">
+                <h2>Casetas</h2>
+                <button id="closeSidePanelLeft" class="close-panel-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="casetasListLeft" class="side-panel-list"></div>
+        </aside>
+        
+        <!-- Cajón Derecho: Programación y Agenda de Eventos Diarios (Ahora vs Destacados) -->
+        <aside id="sidePanelRight" class="side-panel side-panel-right" aria-hidden="true">
+            <div class="side-panel-header events-tab-header">
+                <button id="tabDestacados" class="event-tab-btn active" type="button"> Destacados</button>
+                <button id="tabAhora" class="event-tab-btn" type="button"> Ahora</button>
+                <button id="closeSidePanelRight" class="close-panel-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="casetasListRight" class="side-panel-list"></div>
+        </aside>
+        
+        <!-- Cajón de Filtros: Filtro rápido de casetas mediante Tags predefinidas -->
+        <aside id="tagsPanel" class="side-panel" aria-hidden="true">
+            <div class="side-panel-header">
+                <h2>Filtros</h2>
+                <button id="closeTagsPanel" class="close-panel-btn"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="tagsList" class="side-panel-list tags-filter-list"></div>
+        </aside>
+    </main>
+
+    <!-- ==========================================================================
+         VENTANA EMERGENTE 1: FICHA Y DETALLES DE LA CASETA SELECCIONADA
+         Muestra la agenda diaria, tags asociados, portada y controles interactivos.
+         ========================================================================== -->
+    <div id="modal-overlay" class="modal-overlay" aria-hidden="true">
+        <div class="modal-card">
+            <!-- Botón de Cierre -->
+            <button id="close-modal" class="modal-close-btn" aria-label="Cerrar modal"><i
+                    class="fas fa-times"></i></button>
+            <h2 id="punto-nombre">Nombre de la Caseta</h2>
+            
+            <!-- Contenedor de Ficha Activa (Si la caseta está habilitada en administración) -->
+            <div id="modal-normal-content">
+                <!-- Tags asociados a la caseta -->
+                <div id="punto-etiquetas" class="modal-etiquetas" style="display: none;"></div>
+                
+                <!-- Imagen de Portada de la Caseta -->
+                <img id="punto-imagen" src="" alt="Imagen de la caseta" class="modal-imagen" style="display: none;">
+                
+                <!-- Botón: Abre modal con descripción extendida -->
+                <button id="btn-ver-descripcion" class="modal-descripcion-btn" style="display: none;"><i class="fas fa-info-circle"></i> Leer Descripción</button>
+                
+                <!-- Itinerario y Agenda por Días (Selector de pestañas Premium con scroll táctil) -->
+                <div id="modal-dia-select-container" class="modal-dia-select-container" style="display: none; margin-bottom: 15px;">
+                    <label style="font-weight: 700; font-size: 0.8rem; color: #64748b; margin-bottom: 8px; display: block;">SELECCIONA EL DÍA:</label>
+                    <div id="modal-dia-tabs" class="modal-dia-tabs"></div>
+                </div>
+                <hr>
+                <p class="modal-section-title">PROGRAMACIÓN DE HOY</p>
+                <div id="punto-programacion" class="programacion-list"></div>
+            </div>
+            
+            <!-- Contenedor Alternativo: Mostrar advertencia si la caseta está desactivada -->
+            <div id="modal-disabled-content" class="modal-disabled-content">
+                <p><i class="fas fa-exclamation-triangle"></i> Esta caseta está cerrada temporalmente.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================================================
+         VENTANA EMERGENTE 2: LECTOR DE DESCRIPCIÓN EXTENDIDA (INFO ADICIONAL)
+         ========================================================================== -->
+    <div id="modal-desc-overlay" class="modal-overlay" aria-hidden="true" style="z-index: 2500;">
+        <div class="modal-card" style="max-width: 400px; padding: 24px 20px;">
+            <button id="close-desc-modal" class="modal-close-btn" aria-label="Cerrar modal"><i class="fas fa-times"></i></button>
+            <h2 id="punto-desc-titulo" style="color: var(--darkBlue); font-size: 1.25rem; font-weight: 800; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;"><i class="fas fa-info-circle" style="color: var(--accentBlue);"></i> Descripción</h2>
+            <hr style="border: none; border-top: 1px solid #e1e8f0; margin-bottom: 12px;">
+            <p id="punto-desc-texto" class="modal-descripcion" style="margin-bottom: 0;"></p>
+        </div>
+    </div>
+
+    <!-- Pie de Página Institucional -->
+    <footer class="mainFooter">
+        <div class="footerContent">
+            <div class="footerLeft"><img src="fotos/Logo Algeciras 1 tinta fondos oscuros sin letras interiores.png"
+                    alt="Escudo" class="footerIcon"><span class="footerHandle">ayuntamientoalgeciras</span></div>
+            <div class="footerRight"><span class="copyrightText">&copy; Ayuntamiento de Algeciras</span></div>
+        </div>
+    </footer>
+
+    <!-- Bibliotecas Externas e Inicialización del Visualizador -->
+    <script src="https://unpkg.com/panzoom@9.4.0/dist/panzoom.min.js"></script>
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="script.js?v=1.1.0"></script>
+</body>
+
+</html>
