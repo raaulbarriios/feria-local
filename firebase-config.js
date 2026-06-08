@@ -5,15 +5,15 @@ import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 // Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyCt9VYQN-M6wl7174y-XCHwmAs9TNAQYVg",
-  authDomain: "eventos-ayuntamiento.firebaseapp.com",
-  databaseURL: "https://eventos-ayuntamiento-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "eventos-ayuntamiento",
-  storageBucket: "eventos-ayuntamiento.firebasestorage.app",
-  messagingSenderId: "375769854696",
-  appId: "1:375769854696:web:f6e13c750a99fc66f24f5d",
-  measurementId: "G-NV58CQT7BT"
+  apiKey: "AIzaSyDHAJj-rSSNbywkow7nkGInF171kvdwv_I",
+  authDomain: "feria-local-c4ba3.firebaseapp.com",
+  projectId: "feria-local-c4ba3",
+  storageBucket: "feria-local-c4ba3.firebasestorage.app",
+  messagingSenderId: "794529751322",
+  appId: "1:794529751322:web:69c26d52f94207093e0ca3",
+  measurementId: "G-9L0CNW0D5L"
 };
 
 // Initialize Firebase
