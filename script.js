@@ -347,19 +347,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let userUid = null;
 
-            // 3. Crear el usuario en Authentication si se especifica contraseña
+            // 3. Crear o autenticar el usuario en Authentication si se especifica contraseña
             if (pass) {
                 const secondaryAppName = `SecondaryApp_${Date.now()}`;
                 const secondaryApp = initializeApp(app.options, secondaryAppName);
                 const secondaryAuth = getAuth(secondaryApp);
 
                 try {
+                    // Intentar crear el usuario
                     const secondaryCred = await createUserWithEmailAndPassword(secondaryAuth, cor, pass);
                     userUid = secondaryCred.user.uid;
                     await signOut(secondaryAuth);
                 } catch (authErr) {
                     if (authErr.code === 'auth/email-already-in-use') {
-                        showStatus("El correo ya existe en Authentication. Asociando en Firestore...", "info");
+                        // Si ya existe en Auth, intentamos iniciar sesión para obtener su UID real
+                        try {
+                            const secondaryCred = await signInWithEmailAndPassword(secondaryAuth, cor, pass);
+                            userUid = secondaryCred.user.uid;
+                            await signOut(secondaryAuth);
+                        } catch (loginErr) {
+                            throw new Error("El correo ya está registrado en Firebase Auth, pero la contraseña introducida es incorrecta.");
+                        }
                     } else {
                         throw new Error(`Error en Auth: ${authErr.message}`);
                     }
