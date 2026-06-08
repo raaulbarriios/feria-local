@@ -4,9 +4,10 @@
  * edición completa de información, etiquetas globales de la feria y normalización de la base de datos en Firebase Firestore.
  */
 
-import { db, auth } from './firebase-config.js';
+import { app, db, auth } from './firebase-config.js';
 import { doc, getDoc, setDoc, updateDoc, deleteField, collection, getDocs, query, where, deleteDoc } from "firebase/firestore";
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, inMemoryPersistence } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, inMemoryPersistence, getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { initializeApp } from "firebase/app";
 
 // --- HELPERS BÁSICOS ---
 // Selecciona un elemento por su ID
@@ -333,8 +334,35 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
         try {
+            let userUid = null;
+
             if (pass) {
-                showStatus("Contraseñas no se pueden editar en local. Cambie en Firebase Console", "error");
+                // Crear usuario en Firebase Authentication usando una app secundaria
+                // para evitar desconectar la sesión del administrador actual
+                const secondaryAppName = `SecondaryApp_${Date.now()}`;
+                const secondaryApp = initializeApp(app.options, secondaryAppName);
+                const secondaryAuth = getAuth(secondaryApp);
+
+                try {
+                    const secondaryCred = await createUserWithEmailAndPassword(secondaryAuth, cor, pass);
+                    userUid = secondaryCred.user.uid;
+                    // Cerrar sesión en la app secundaria para limpiar memoria
+                    await signOut(secondaryAuth);
+                } catch (authErr) {
+                    if (authErr.code === 'auth/email-already-in-use') {
+                        showStatus("El correo ya existe en Authentication. Asociando en Firestore...", "info");
+                    } else {
+                        throw new Error(`Error en Auth: ${authErr.message}`);
+                    }
+                }
+            }
+
+            // Buscar si ya existe este correo en la colección de usuarios para obtener su UID
+            if (!userUid) {
+                const querySnap = await getDocs(query(collection(db, "usuario"), where("email", "==", cor)));
+                if (!querySnap.empty) {
+                    userUid = querySnap.docs[0].id;
+                }
             }
 
             // Limpia y elimina relaciones duplicadas previas asociadas a esta caseta
@@ -343,9 +371,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 await deleteDoc(doc(db, "usuario", oldDoc.id));
             }
 
+            // Si tenemos un UID de usuario (creado ahora o buscado previamente), creamos/actualizamos la relación en Firestore
+            if (userUid) {
+                await setDoc(doc(db, "usuario", userUid), {
+                    casetaId: normalizeId(num),
+                    email: cor
+                });
+            }
+
             // Actualiza la vinculación de propietario y limpia rastros legados de ownerEmail en el documento de feria
             await setDoc(doc(db, "feria", normalizeId(num)), { nombre: nom, ownerId: cor, ownerEmail: deleteField() }, { merge: true });
-            showStatus("Actualizado", "success"); passIn.value = '';
+            
+            showStatus(pass ? "Caseta y Usuario creados correctamente" : "Actualizado", "success"); 
+            passIn.value = '';
         } catch (e) { 
             showStatus("Error: " + e.message, "error");
         } finally {
