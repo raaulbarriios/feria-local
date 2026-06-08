@@ -1,0 +1,297 @@
+/**
+ * ==========================================================================
+ * SISTEMA DE ESTILOS DEL PANEL DE CASETEROS (Casetero)
+ * Contiene paletas institucionales, resets globales, diseño de autenticación,
+ * componentes del panel interactivo, planificador semanal de eventos,
+ * y la adaptabilidad responsive premium para tablet y móvil.
+ * ==========================================================================
+ */
+
+:root {
+    /* --- COLORIMETRÍA OFICIAL DEL AYUNTAMIENTO --- */
+    --primary: #0B63A5;      /* Azul Oficial */
+    --primary-hover: #0A5A99;
+    --dark: #042A4A;         /* Azul Oscuro */
+    --active: #FFB500;       /* Amarillo Oficial */
+    --bg: #F5F7FA;           /* Fondo gris claro */
+    --surface: #FFFFFF;      /* Blanco para tarjetas */
+    --text: #1F2937;         /* Texto general */
+    --text-mut: #6B7280;     /* Texto secundario */
+    --border: #E5E7EB;       /* Bordes */
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+
+/* ==========================================================================
+   1. RESETS GENERALES Y CONTENEDORES BASE
+   ========================================================================== */
+html { overflow-x: hidden; max-width: 100%; box-sizing: border-box; }
+body { 
+    background: var(--bg); 
+    color: var(--text); 
+    min-height: 100vh; 
+    min-height: 100dvh; 
+    display: flex; 
+    flex-direction: column; 
+    margin: 0; 
+    font-family: 'Inter', sans-serif; 
+    overflow-x: hidden; 
+    overflow-y: auto; 
+    width: 100%; 
+    max-width: 100%; 
+}
+
+/* Transiciones fluidas entre secciones de login y panel principal */
+.view-section { display: none; opacity: 0; transition: opacity 0.4s; flex-direction: column; min-height: 100vh; min-height: 100dvh; width: 100%; box-sizing: border-box; }
+.view-section.active { display: flex; opacity: 1; }
+
+@media (min-width: 651px) {
+    #panelView.active { height: 100vh; height: 100dvh; overflow: hidden; }
+}
+
+.authBody { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+.panelMain { padding: 20px 4%; max-width: 800px; margin: 0 auto; width: 100%; flex: 1; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden; }
+.panelContainer { flex: 1; display: flex; flex-direction: column; overflow: hidden; max-height: 100%; }
+.panelBody { flex: 1; overflow-y: auto; padding: 25px 35px; }
+
+/* ==========================================================================
+   2. DISEÑO INSTITUCIONAL DE CABECERA Y PIE (HEADER & FOOTER)
+   ========================================================================== */
+.adminHeader, .adminFooter { background: var(--primary); color: var(--surface); padding: 10px 4%; display: flex; justify-content: space-between; align-items: center; }
+.adminHeader { box-shadow: var(--shadow); min-height: 60px; }
+.adminFooter { padding: 15px 0; margin-top: auto; }
+.adminHeaderLogo img { height: 75px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); transition: 0.3s; }
+.adminHeaderLogo img:hover { transform: scale(1.02); }
+.adminHeaderTitle h1 { font-family: 'Inter', sans-serif; font-size: 1.5rem; font-weight: 500; text-transform: uppercase; margin: 0; color: var(--surface); }
+.footerContent { width: 100%; padding: 0 2%; display: flex; justify-content: space-between; align-items: center; }
+.footerLeft { display: flex; align-items: center; gap: 10px; }
+.footerIcon { height: 24px; opacity: 0.9; }
+.footerHandle { font-size: 0.85rem; font-weight: 500; }
+.copyrightText { font-size: 0.8rem; opacity: 0.8; }
+
+/* ==========================================================================
+   3. TARJETAS DE CONTENEDORES Y DISEÑO DEL LOGIN / 2FA
+   ========================================================================== */
+.privateCard { width: 100%; background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); border: 1px solid var(--border); box-sizing: border-box; overflow: hidden; min-width: 0; }
+.loginContainer {
+    max-width: 460px;
+    padding: 40px 44px;
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,.04);
+    box-shadow: 0 8px 30px rgba(0,0,0,.07);
+    background: #FFFFFF;
+    text-align: center;
+}
+.authLogo { max-width: 100px; width: 100%; height: auto; margin: 0 auto 18px; display: block; object-fit: contain; }
+.loginHeader { text-align: center; margin-bottom: 0; }
+.loginTitle { color: #186daf; font-size: 1.6rem; font-weight: 800; margin-top: 0; margin-bottom: 4px; letter-spacing: -.5px; }
+.loginSubtitle { color: #64748B; font-size: 0.9rem; font-weight: 500; margin-bottom: 24px; }
+
+/* Entradas y botones interactivos dentro del login */
+.loginContainer .formGroup { margin-bottom: 16px; text-align: left; }
+.loginContainer .formGroup label { display: block; margin-bottom: 4px; font-weight: 600; font-size: .78rem; text-transform: uppercase; letter-spacing: .4px; color: #186daf; }
+.loginContainer .inputControl {
+    width: 100%;
+    padding: 13px 15px;
+    background: #f8fafc;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    outline: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: .95rem;
+    font-weight: 500;
+    color: #333;
+    transition: .3s cubic-bezier(.4,0,.2,1);
+    box-sizing: border-box;
+}
+.loginContainer .inputControl:focus { background: #FFFFFF; border-color: #0B63A5; box-shadow: 0 0 0 3px rgba(11,99,165,.1); }
+.loginContainer .inputControl:disabled { background: #f1f5f9; color: #64748B; cursor: not-allowed; border-color: #E2E8F0; }
+.loginContainer .submitBtn {
+    width: 100%;
+    background: #0B63A5;
+    color: #FFFFFF;
+    border: none;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .3s cubic-bezier(.4,0,.2,1);
+    font-family: 'Inter', sans-serif;
+    margin-top: 8px;
+    box-shadow: 0 4px 15px rgba(11,99,165,.25);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    text-transform: uppercase;
+}
+.loginContainer .submitBtn:hover { background: #0A5A99; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(11,99,165,.35); }
+.loginContainer .submitBtn:active { background: #FFB500; color: #042A4A; transform: scale(.98); box-shadow: 0 4px 12px rgba(255,181,0,.4); }
+.loginContainer .statusMsg { margin-top: 15px; padding: 12px 15px; }
+
+/* Títulos del panel principal */
+.panelTitle { color: var(--dark); font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 12px; margin: 0 0 25px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
+.panelTitle i { color: var(--primary); }
+
+/* ==========================================================================
+   4. ELEMENTOS DINÁMICOS DE FORMULARIO DEL PANEL DE EDICIÓN
+   ========================================================================== */
+.formGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.formGroup { margin-bottom: 22px; text-align: left; }
+.formGroup.full-width { grid-column: 1 / -1; }
+.formGroup label { display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; color: var(--dark); }
+.loginContainer .formGroup label { color: #2F80C1; }
+
+.inputWrapper { position: relative; }
+.inputWrapper i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 1.1rem; transition: 0.3s; }
+.loginContainer .inputWrapper i { color: #2F80C1; opacity: 0.7; }
+
+.inputControl { width: 100%; padding: 14px 15px 14px 45px; background: #f8fafc; border: 2px solid transparent; border-radius: 10px; font-family: 'Inter', sans-serif; font-size: 1rem; color: var(--text); box-sizing: border-box; transition: 0.3s; }
+.inputControl:focus { background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 4px rgba(11,99,165,0.1); outline: none; }
+.inputControl:focus + i { color: var(--primary); }
+.inputControl:disabled { background: #f1f5f9; color: var(--text-mut); cursor: not-allowed; border-color: var(--border); }
+
+/* Botones Premium y efectos de hover/active */
+.submitBtn { width: 100%; padding: 16px; background: var(--primary); color: var(--surface); border: none; border-radius: 10px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 15px; box-shadow: 0 4px 15px rgba(11,99,165,0.25); box-sizing: border-box; font-family: 'Inter', sans-serif; }
+.submitBtn:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(11,99,165,0.35); }
+.submitBtn:active { background: var(--active); color: var(--dark); transform: scale(0.98); }
+.submitBtn:disabled { background: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.logoutBtn { background: #D93025; color: var(--surface); border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; box-shadow: 0 4px 15px rgba(217,48,37,0.25); font-family: 'Inter', sans-serif; }
+.logoutBtn:hover { background: #B3261E; transform: translateY(-2px); }
+
+/* Avisos, mensajes y animación de Shimmer (Skeleton loader) */
+.statusMsg { padding: 14px 20px; border-radius: 10px; margin-top: 20px; display: none; text-align: center; font-weight: 600; font-size: 0.95rem; animation: slideUp 0.3s ease; box-sizing: border-box; width: 100%; }
+.statusMsg.success { color: #0f5132; background: #d1e7dd; border: 1px solid #badbcc; }
+.statusMsg.error { color: #842029; background: #f8d7da; border: 1px solid #f5c2c7; }
+.statusMsg.cors-warning { background: #fff3cd; color: #856404; border-color: #ffeeba; text-align: left; padding: 15px; }
+
+@keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.skeleton { background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%); background-size: 200% 100%; color: transparent!important; animation: shimmer 1.5s infinite; }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+/* ==========================================================================
+   5. SISTEMA DE ETIQUETAS INTERACTIVAS (BADGES)
+   ========================================================================== */
+.tags-container { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; padding: 6px 0; transition: all 0.3s ease; }
+.tags-container.skeleton { pointer-events: none; opacity: 0.6; }
+.tag-badge { padding: 10px 18px; background: #f8fafc; border: 2px solid var(--border); color: var(--dark); font-size: 0.9rem; font-weight: 600; border-radius: 50px; cursor: pointer; user-select: none; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); display: inline-flex; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+.tag-badge:hover { background: #f1f5f9; border-color: #cbd5e1; color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(11,99,165,0.08); }
+.tag-badge.selected { background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%); border-color: var(--primary); color: var(--surface); box-shadow: 0 4px 14px rgba(11,99,165,0.3); }
+.tag-badge.selected:hover { background: linear-gradient(135deg, var(--primary-hover) 0%, #1e40af 100%); box-shadow: 0 6px 18px rgba(11,99,165,0.4); transform: translateY(-2px); }
+.tag-badge:active { transform: translateY(0) scale(0.96); transition: transform 0.05s; }
+
+/* ==========================================================================
+   6. PLANIFICADOR DE EVENTOS DIARIOS (SCHEDULE EDITOR)
+   ========================================================================== */
+.schedule-editor { background: #f8fafc; border: 1px solid var(--border); border-radius: 12px; padding: 18px; margin-top: 8px; }
+.schedule-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; max-height: 250px; overflow-y: auto; padding-right: 5px; }
+.schedule-list::-webkit-scrollbar { width: 6px; }
+.schedule-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.schedule-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+.schedule-item:hover { border-color: #cbd5e1; transform: translateY(-1px); box-shadow: 0 3px 8px rgba(0,0,0,0.04); }
+.schedule-item-info { display: flex; align-items: center; gap: 12px; flex: 1; }
+.schedule-item-time { background: rgba(11, 99, 165, 0.1); color: var(--primary); font-weight: 700; font-size: 0.88rem; padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+.schedule-item-activity { color: var(--text); font-size: 0.95rem; font-weight: 500; }
+.delete-event-inline { background: transparent; color: #ef4444; border: none; cursor: pointer; font-size: 1rem; padding: 6px 10px; border-radius: 6px; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; }
+.delete-event-inline:hover { background: #fef2f2; color: #b91c1c; }
+.schedule-empty { text-align: center; color: var(--text-mut); font-size: 0.9rem; padding: 15px 0; font-style: italic; }
+
+.schedule-add-form { border-top: 1px solid var(--border); padding-top: 15px; display: flex; flex-direction: column; gap: 12px; }
+.schedule-add-fields { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
+
+.add-event-btn { background: #10b981; color: var(--surface); border: none; border-radius: 8px; padding: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2); }
+.add-event-btn:hover { background: #059669; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35); }
+.add-event-btn:active { transform: scale(0.98); }
+
+/* ==========================================================================
+   7. REJILLA DE PESTAÑAS DIARIAS (CON ALINEACIÓN PARA DÍA 28 CENTRADO)
+   ========================================================================== */
+.modal-dia-tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.modal-dia-tab-btn:nth-child(9) { grid-column: 1 / span 4; justify-self: center; width: calc(25% - 6px); }
+.modal-dia-tab-btn { background: rgba(11, 99, 165, 0.05); color: var(--text-mut); border: 1px solid var(--border); padding: 10px 4px; border-radius: 20px; font-family: 'Inter', sans-serif; font-size: 0.78rem; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s ease; outline: none; user-select: none; }
+.modal-dia-tab-btn:hover { background: rgba(11, 99, 165, 0.1); color: var(--primary); border-color: var(--primary); transform: translateY(-1px); }
+.modal-dia-tab-btn.active { background: var(--primary); color: var(--surface); border-color: transparent; box-shadow: 0 4px 10px rgba(11, 99, 165, 0.25); }
+
+/* ==========================================================================
+   8. COMPONENTES ADICIONALES (FOTOS DE PORTADA CON EFECTO DE REFLEJO)
+   ========================================================================== */
+.remove-image-btn { width: 100%; background: #e74c3c; color: white; border: none; border-radius: 0 0 10px 10px; padding: 12px; font-weight: 800; cursor: pointer; margin-top: -2px; z-index: 1; font-family: 'Inter', sans-serif; text-transform: uppercase; font-size: 0.95rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); letter-spacing: 0.5px; position: relative; overflow: hidden; }
+.remove-image-btn:hover { background: #c0392b; box-shadow: 0 8px 20px rgba(231, 76, 60, 0.4); }
+.remove-image-btn:active { transform: scale(0.98); box-shadow: 0 2px 5px rgba(231, 76, 60, 0.2); }
+
+@keyframes shineEffect { 0% { left: -100%; } 20% { left: 200%; } 100% { left: 200%; } }
+.remove-image-btn::after { content: ""; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%); transform: skewX(-25deg); animation: shineEffect 4s infinite; }
+
+.hidden { display: none !important; }
+
+/* ==========================================================================
+   9. ADAPTABILIDAD RESPONSIVE MÓVIL (<= 650px)
+   ========================================================================== */
+@media (max-width: 650px) {
+    html, body { overflow-x: hidden; max-width: 100%; width: 100%; }
+    body.view-panel, body.view-login { overflow-y: auto; height: auto; max-height: none; }
+    
+    #panelView.active { display: flex; opacity: 1; overflow: hidden; height: auto; max-height: none; width: 100%; max-width: 100%; box-sizing: border-box; }
+    #panelView .panelMain { padding: 10px 8px; overflow: hidden; height: auto; max-height: none; flex: none; width: 100%; max-width: 100%; box-sizing: border-box; min-width: 0; }
+    #panelView .panelContainer { overflow: hidden; height: auto; max-height: none; flex: none; width: 100%; max-width: 100%; box-sizing: border-box; min-width: 0; }
+    #panelView .panelBody { overflow: hidden; height: auto; flex: none; padding: 16px 14px; width: 100%; max-width: 100%; box-sizing: border-box; min-width: 0; }
+    
+    #editForm, .formGrid, .formGroup, .privateCard, .schedule-editor, .schedule-add-form, .schedule-add-fields, .schedule-list, .tags-container, .inputWrapper, .inputWrapper > div { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; min-width: 0 !important; }
+    
+    .formGrid { grid-template-columns: 1fr; gap: 16px; }
+    .formGroup { margin-bottom: 14px; }
+    
+    .inputControl { width: 100%; max-width: 100%; box-sizing: border-box; padding: 11px 12px 11px 38px; font-size: 0.95rem; border-radius: 8px; min-width: 0; }
+    textarea.inputControl { padding-left: 38px; }
+    .inputWrapper i { left: 12px; font-size: 1rem; }
+    
+    /* Pestañas de días en carrusel móvil deslizable horizontalmente sin scroll roto */
+    .modal-dia-tabs { display: flex; overflow-x: auto; overflow-y: hidden; white-space: nowrap; gap: 6px; padding-bottom: 8px; -webkit-overflow-scrolling: touch; scrollbar-width: none; max-width: 100%; width: 100%; box-sizing: border-box; }
+    .modal-dia-tabs::-webkit-scrollbar { display: none; }
+    .modal-dia-tab-btn { flex: 0 0 auto; padding: 7px 14px; font-size: 0.82rem; border-radius: 20px; white-space: nowrap; }
+    
+    .tags-container { flex-wrap: wrap; overflow: hidden; }
+    .tag-badge { padding: 7px 12px; font-size: 0.82rem; }
+    
+    .schedule-editor { padding: 12px; overflow: hidden; }
+    .schedule-list { max-height: 200px; overflow-y: auto; }
+    .schedule-item { padding: 8px 10px; }
+    .schedule-item-info { min-width: 0; overflow: hidden; }
+    .schedule-item-time { font-size: 0.8rem; padding: 3px 6px; flex-shrink: 0; }
+    .schedule-item-activity { font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .add-event-btn { padding: 10px; font-size: 0.9rem; width: 100%; box-sizing: border-box; }
+    
+    .submitBtn { padding: 12px; font-size: 1rem; border-radius: 8px; width: 100%; box-sizing: border-box; }
+    .statusMsg { padding: 10px 14px; font-size: 0.9rem; border-radius: 8px; margin-top: 12px; box-sizing: border-box; width: 100%; }
+    
+    .adminHeader { height: auto; min-height: 56px; padding: 6px 12px; gap: 8px; }
+    .adminHeaderLogo img { height: 48px; }
+    .adminHeaderTitle h1 { display: none; }
+    .logoutText { display: none; }
+    .logoutBtn { width: 42px; height: 42px; padding: 0; justify-content: center; }
+    
+    .panelTitle { font-size: 1.25rem; margin-bottom: 16px; padding-bottom: 10px; }
+    
+    #loginView.active { height: auto; max-height: none; overflow: visible; display: flex; flex-direction: column; opacity: 1; }
+    #loginView.active .authBody { padding: 20px 10px; flex: 1; display: flex; align-items: center; justify-content: center; }
+    .loginContainer { padding: 24px 20px; border-radius: 12px; max-height: none; height: auto; box-sizing: border-box; margin: 0 auto; }
+    .loginHeader { margin-bottom: 0; }
+    .loginHeader .authLogo { max-width: 60px; margin-bottom: 8px; }
+    .loginTitle { font-size: 1.25rem; margin-bottom: 2px; margin-top: 0; }
+    .loginSubtitle { font-size: 0.8rem; margin-bottom: 16px; }
+    #loginView .formGroup { margin-bottom: 12px; }
+    .loginContainer .formGroup label { font-size: 0.75rem; margin-bottom: 4px; }
+    .loginContainer .inputControl { padding: 11px 12px; font-size: 0.9rem; border-radius: 7px; }
+    .loginContainer .submitBtn { padding: 12px; font-size: 0.95rem; margin-top: 8px; }
+}
+
+/* ==========================================================================
+   10. ADAPTABILIDAD RESPONSIVE EXTRA MÓVIL (<= 480px)
+   ========================================================================== */
+@media (max-width: 480px) {
+    .footerContent { flex-direction: column; gap: 8px; text-align: center; align-items: center; justify-content: center; }
+    .footerLeft { flex-direction: column; gap: 4px; align-items: center; justify-content: center; width: 100%; }
+    .copyrightText { text-align: center; display: block; width: 100%; }
+}

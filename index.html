@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Gestión Casetas</title>
+    <!-- Fuentes tipográficas de Google Fonts (Inter) e iconos premium de Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    
+    <!-- Estilos de diseño premium de la aplicación con cache-busting para forzar actualizaciones -->
+    <link rel="stylesheet" href="style.css?v=3.1">
+    
+    <!-- Import Map para cargar de forma segura los SDK CDN de Firebase en entornos modulares -->
+    <script type="importmap">
+      {
+        "imports": {
+          "firebase/app": "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js",
+          "firebase/analytics": "https://www.gstatic.com/firebasejs/10.11.0/firebase-analytics.js",
+          "firebase/firestore": "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js",
+          "firebase/auth": "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js"
+        }
+      }
+    </script>
+</head>
+<body>
+
+    <!-- ==========================================================================
+         VISTA 1: FORMULARIO DE ACCESO Y DOBLE FACTOR (2FA)
+         Esta vista de acceso está activa por defecto.
+         ========================================================================== -->
+    <div id="loginView" class="view-section active">
+        <!-- Barra de Cabecera del Ayuntamiento -->
+        <header class="adminHeader">
+            <div class="adminHeaderLogo"><img src="fotos/Logo algeciras color blanco texto derecha.png" alt="Ayuntamiento"></div>
+        </header>
+
+        <!-- Contenedor Principal de Autenticación -->
+        <main class="authBody">
+            <div class="loginContainer">
+                <div class="loginHeader">
+                    <img src="fotos/Logo Algeciras 1 tinta fondos claros ver azul.png" alt="Escudo" class="authLogo" style="max-width: 100px; width: 100%; height: auto; margin: 0 auto 18px; display: block; object-fit: contain;">
+                    <h1 class="loginTitle">Acceso Caseteros</h1>
+                    <p class="loginSubtitle">Introduce tus credenciales</p>
+                </div>
+
+                <!-- Paso A: Login básico con usuario y clave de acceso -->
+                <form id="loginForm">
+                    <!-- Campo: Correo del Propietario -->
+                    <div class="formGroup">
+                        <label for="loginCorreo">Correo Electrónico</label>
+                        <div class="inputWrapper">
+                            <input type="email" id="loginCorreo" class="inputControl" required placeholder="tu@correo.com">
+                        </div>
+                    </div>
+                    <!-- Campo: Contraseña -->
+                    <div class="formGroup">
+                        <label for="loginPassword">Contraseña</label>
+                        <div class="inputWrapper">
+                            <input type="password" id="loginPassword" class="inputControl" required placeholder="••••••••">
+                        </div>
+                    </div>
+                    
+                    <!-- Acción de Envío de Credenciales -->
+                    <button type="submit" class="submitBtn" id="loginSubmitBtn">Iniciar Sesión</button>
+                    <!-- Contenedor dinámico de alertas por error de credenciales -->
+                    <div id="loginErrorMsg" class="statusMsg error" style="display: none;"><i class="fas fa-exclamation-triangle"></i> Credenciales incorrectas.</div>
+
+                    <!-- Script de validación de protocolo de seguridad local CORS -->
+                    <script>
+                        if (window.location.protocol === 'file:') {
+                            const corsMsg = document.getElementById('corsWarningMsg');
+                            if (corsMsg) corsMsg.style.display = 'block';
+                            const submitBtn = document.getElementById('loginSubmitBtn');
+                            if (submitBtn) submitBtn.disabled = true;
+                        }
+                    </script>
+                </form>
+
+                <!-- Paso B: Control de código de seguridad dinámico de 6 dígitos (2FA) -->
+                <form id="login2faForm" class="hidden">
+                    <p style="color: #64748b; font-size: 0.9rem; text-align: center; margin-bottom: 20px; line-height: 1.4;">
+                        Hemos enviado un código de verificación de 6 dígitos a tu correo. Por favor, introdúcelo para continuar.
+                    </p>
+                    <div class="formGroup">
+                        <label for="twoFactorInput">Código de Verificación</label>
+                        <div class="inputWrapper">
+                            <!-- Input premium estilizado para entrada numérica segmentada -->
+                            <input type="text" id="twoFactorInput" placeholder="••••••" maxlength="6" pattern="\d{6}" style="text-align: center; font-size: 1.6rem; letter-spacing: 8px; font-weight: 700; height: 50px; background-color: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; width: 100%; box-sizing: border-box;" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="submitBtn">Verificar Código</button>
+                    <!-- Contenedor dinámico de error de verificación -->
+                    <div id="login2faErrorMsg" class="statusMsg error" style="display: none;"><i class="fas fa-exclamation-triangle"></i> Código incorrecto.</div>
+                    
+                    <!-- Enlaces secundarios para reenvío de PIN o retorno al formulario base -->
+                    <div style="display: flex; justify-content: space-between; margin-top: 18px; font-size: 0.85rem;">
+                        <span id="resend2faBtn" style="color: #1e3a8a; cursor: pointer; font-weight: 600; text-decoration: underline;">Reenviar Código</span>
+                        <span id="backToLoginBtn" style="color: #64748b; cursor: pointer; font-weight: 600; text-decoration: underline;">Volver al Login</span>
+                    </div>
+                </form>
+            </div>
+        </main>
+
+        <!-- Pie de Página Institucional -->
+        <footer class="adminFooter">
+            <div class="footerContent">
+                <div class="footerLeft"><img src="fotos/Logo Algeciras 1 tinta fondos oscuros.png" alt="Ayuntamiento" class="footerIcon"><span class="footerHandle">ayuntamientoalgeciras</span></div>
+                <div class="copyrightText">© Ayuntamiento de Algeciras</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ==========================================================================
+         VISTA 2: PANEL PRIVADO DE EDICIÓN DEL CASETERO
+         Se activa dinámicamente al validar correctamente la sesión y el código 2FA.
+         ========================================================================== -->
+    <div id="panelView" class="view-section">
+        
+        <!-- Cabecera de Identificación y Cierre de Sesión -->
+        <header class="adminHeader" role="banner">
+            <div class="adminHeaderLogo"><img src="fotos/Logo algeciras color blanco texto derecha.png" alt="Ayuntamiento"></div>
+            <div class="adminHeaderTitle"><h1>Gestión de Casetas</h1></div>
+            <div class="adminHeaderActions">
+                <button id="logoutBtn" class="logoutBtn" title="Cerrar Sesión"><i class="fas fa-sign-out-alt"></i> <span class="logoutText">Cerrar Sesión</span></button>
+            </div>
+        </header>
+
+        <!-- Contenedor Principal del Panel de Control -->
+        <main class="panelMain" role="main">
+            <div class="privateCard panelContainer">
+                <div class="panelBody">
+                    <h1 class="panelTitle"><i class="fas fa-store"></i> Mi Caseta</h1>
+                    
+                    <form id="editForm">
+                        <div class="formGrid">
+                            <!-- Campos de Lectura Obligatoria y Protegidos contra Escritura -->
+                            <div class="formGroup"><label>Nº de Caseta</label><div class="inputWrapper"><input type="text" id="panelNumero" class="inputControl skeleton" disabled><i class="fas fa-hashtag"></i></div></div>
+                            <div class="formGroup"><label>Nombre</label><div class="inputWrapper"><input type="text" id="panelNombre" class="inputControl skeleton" disabled><i class="fas fa-signature"></i></div></div>
+                            
+                            <!-- Bloque de Selección de Etiquetas Relacionadas a la Caseta -->
+                            <div class="formGroup full-width">
+                                <label>Etiquetas de la Caseta</label>
+                                <div class="tags-container skeleton" id="tagsContainer">
+                                    <!-- Los badges interactivos se inyectan dinámicamente desde JS -->
+                                </div>
+                                <input type="hidden" id="panelEtiquetas" value="">
+                            </div>
+                            
+                            <!-- Zona de Subida y Validación de Portadas Horizontales -->
+                            <div class="formGroup full-width">
+                                <label>Imagen de la Caseta</label>
+                                <span class="input-help-text" style="font-size: 0.8rem; color: #64748b; margin-top: -4px; margin-bottom: 8px; display: block; width: 100%; max-width: 100%; box-sizing: border-box; word-break: break-word; white-space: normal;"><i class="fas fa-info-circle" style="color: #0b63a5; margin-right: 4px;"></i> Por favor, sube una imagen en formato <strong>horizontal</strong> (apaisada). Las fotos en formato vertical no están permitidas.</span>
+                                <div class="inputWrapper" style="display: flex; flex-direction: column;">
+                                    <div style="position: relative;">
+                                        <input type="file" id="panelImagen" class="inputControl" accept="image/*" style="transition: border-radius 0.2s;">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                    <!-- Botón dinámico para remover la imagen existente -->
+                                    <button type="button" id="removeImageBtn" class="remove-image-btn" style="display: none;">Eliminar</button>
+                                </div>
+                                <!-- Previsualizador local de la imagen de portada comprimida -->
+                                <div id="previewContainer" style="display:none; position: relative; margin-top: 15px; width: fit-content;">
+                                    <img id="imagenPreview" src="" alt="Vista previa" style="max-width:100%; border-radius:10px; display:block;">
+                                </div>
+                            </div>
+                            
+                            <!-- Caja de Texto: Descripción Detallada / Info Especial -->
+                            <div class="formGroup full-width">
+                                <label>Descripción</label>
+                                <div class="inputWrapper">
+                                    <textarea id="panelDescripcion" class="inputControl skeleton" style="resize:vertical;min-height:80px;padding-left:40px;"></textarea>
+                                    <i class="fas fa-align-left" style="position:absolute;left:15px;top:15px;"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Módulo Planificador de Eventos Semanales (Agenda de la Caseta) -->
+                            <div class="formGroup full-width">
+                                <label>Programación de Eventos</label>
+                                <div class="schedule-editor" id="scheduleEditor">
+                                    <!-- Pestañas selectoras de día (Grid Premium interactivo Día 20 a Día 28) -->
+                                    <div id="modal-dia-tabs" class="modal-dia-tabs" style="margin-bottom: 15px;"></div>
+                                    
+                                    <!-- Lista interactiva de actividades del día actual -->
+                                    <div id="scheduleList" class="schedule-list">
+                                        <!-- Se inyecta dinámicamente por JS -->
+                                    </div>
+                                    
+                                    <!-- Formulario rápido de inserción de eventos -->
+                                    <div class="schedule-add-form">
+                                        <div class="schedule-add-fields">
+                                            <div class="inputWrapper">
+                                                <input type="text" id="addEventHora" class="inputControl" placeholder="Hora (ej: 14:00)">
+                                                <i class="fas fa-clock" style="top: 50% !important;"></i>
+                                            </div>
+                                            <div class="inputWrapper">
+                                                <input type="text" id="addEventActividad" class="inputControl" placeholder="Actividad (ej: Comida)">
+                                            </div>
+                                        </div>
+                                        <button type="button" id="addEventBtn" class="add-event-btn"><i class="fas fa-plus"></i> Añadir Evento</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Botón para Persistir los Cambios en Firestore -->
+                        <button type="submit" class="submitBtn" id="panelSaveBtn"><i class="fas fa-save"></i> Guardar Cambios</button>
+                        
+                        <!-- Notificación flotante de confirmación de guardado -->
+                        <div id="panelStatusMsg" class="statusMsg"></div>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <!-- Pie de Página del Dashboard -->
+        <footer class="adminFooter">
+            <div class="footerContent">
+                <div class="footerLeft"><img src="fotos/Logo Algeciras 1 tinta fondos oscuros.png" alt="Ayuntamiento" class="footerIcon"><span class="footerHandle">ayuntamientoalgeciras</span></div>
+                <div class="copyrightText">© Ayuntamiento de Algeciras</div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Inicialización del módulo de control JS -->
+    <script type="module" src="script.js?v=3"></script>
+</body>
+</html>
