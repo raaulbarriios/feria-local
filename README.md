@@ -1,112 +1,280 @@
-# Manual de Usuario Extendido - Panel de Administración de la Feria de Algeciras
+# Manual Técnico de Desarrollo y Despliegue - Feria Local de Algeciras
 
-Bienvenido al Panel de Administración Oficial de la Feria de Algeciras. Este documento es una guía paso a paso, exhaustiva y detallada, orientada al personal administrativo encargado de la gestión integral de la información de las casetas.
-
-El panel permite realizar altas de usuarios (caseteros), gestionar permisos de visibilidad pública en el mapa, y modificar en tiempo real la información descriptiva y de agenda de cualquier caseta.
+Este repositorio contiene la arquitectura cliente-servidor para la gestión, control y visualización del mapa interactivo y programación de la Feria de Algeciras. La arquitectura ha sido optimizada para un funcionamiento **100% descentralizado e independiente de backends intermediarios (Cloudflare Workers, APIs de terceros o microservicios de 2FA)**, conectando directamente el frontend con la base de datos de Firebase.
 
 ---
 
-## 1. Acceso Seguro al Sistema (Login y 2FA)
+## 1. Arquitectura de Datos (Firestore)
 
-El sistema cuenta con un acceso protegido para garantizar que solo personal autorizado pueda modificar la base de datos de la feria.
+El sistema utiliza **Firebase Firestore** como base de datos en tiempo real y **Firebase Authentication** para la gestión de accesos. Para lograr la máxima eficiencia y consistencia relacional sin duplicados, las colecciones se definen bajo las siguientes especificaciones técnicas:
 
-### Pasos para iniciar sesión:
-1. **Abrir el portal:** Ingresa a la dirección web privada del panel de administración.
-2. **Introducir credenciales:** En la pantalla principal ("Admin Login"), escribe tu **Correo Electrónico Institucional** y tu **Contraseña** secreta.
-3. **Botón de acceso:** Haz clic en el botón azul **"ACCEDER AL PANEL"**. En este momento, el botón mostrará el mensaje *"VERIFICANDO..."*.
-4. **Validación de Doble Factor (2FA):** 
-   - Si las credenciales son correctas, el sistema te redirigirá a una segunda pantalla de seguridad.
-   - Revisa la bandeja de entrada del correo que acabas de introducir. Habrás recibido un email oficial con el asunto "Código de Verificación 2FA - Feria de Algeciras".
-   - Este correo contiene un código único de 6 dígitos. Escríbelo en la casilla de verificación.
-   - *Nota:* El código tiene una caducidad de 24 horas y solo dispone de 3 intentos antes de bloquearse.
-5. **Entrada:** Una vez verificado el código, accederás automáticamente al "Dashboard" o Panel Principal.
+```
+                               ┌────────────────────────────────┐
+                               │     Firebase Authentication    │
+                               │  (Registro seguro de usuarios) │
+                               └──────────────┬─────────────────┘
+                                              │
+                                              │ UID (Generado en Auth)
+                                              ▼
+┌───────────────────────────┐    1:1   ┌────────────────────────────────┐
+│   Colección 'usuario'     ├─────────►│     Colección 'feria'          │
+│   (Mapeo e ID de Caseta)  │          │   (Configuración de Casetas)   │
+│                           │          │                                │
+│  - Document ID: UID       │          │  - Document ID: p01 a p56      │
+│  - casetaId: "pXX"        │          │  - nombre: "EL PITO", etc.     │
+│  - email: "correo@..."    │          │  - estatus: true/false         │
+|                           |          │  - programacion: { ... }       │
+└───────────────────────────┘          └────────────────────────────────┘
+```
 
----
+### A. Colección `usuario` (Punto de anclaje de autenticación)
+Cada documento tiene como ID de documento el **UID de Authentication**.
+*   **Propósito:** Sirve para relacionar de forma directa un usuario logueado con su respectiva caseta sin exponer credenciales.
+*   **Campos:**
+    ```json
+    {
+      "casetaId": "p01",
+      "email": "raulbarrios@gmail.com"
+    }
+    ```
 
-## 2. Descripción del Panel Principal (Dashboard)
-
-El panel de trabajo está diseñado para ser intuitivo y evitar que se mezclen las tareas. Está compuesto por una barra superior institucional con el botón de salida y un bloque central con tres pestañas navegables: **Credenciales**, **Editar** y **Etiquetas**.
-
-> ⚠️ **REGLA DE ORO:** Siempre que termines de trabajar en el panel, debes hacer clic en el botón rojo **"SALIR"** de la esquina superior derecha. Esto desconectará tu sesión y evitará que cualquier otra persona con acceso al ordenador pueda manipular el sistema.
-
----
-
-## 3. Pestaña 1: Credenciales (Gestión de Accesos y Caseteros)
-
-Esta es la sección más crítica. Aquí controlarás la identidad de las casetas, si aparecen o no en el mapa público, y a quién pertenece cada una.
-
-### ¿Cómo buscar o registrar una caseta?
-1. **Nº de Caseta:** Es el campo principal. Debes introducir el identificador exacto, por ejemplo, `54` o `p54`. 
-   - *Magia del sistema:* Nada más escribir el número, el panel buscará en la base de datos. Si la caseta ya existe, los campos inferiores (Nombre y Correo) se rellenarán solos. Si está vacía, significa que es un registro nuevo.
-2. **Nombre de la Caseta:** Escribe el nombre completo y oficial, asegurándote de no cometer errores tipográficos.
-3. **Correo del Propietario:** Introduce el email de la persona responsable de la caseta. A este correo se le vinculará el acceso a su propio panel privado (el Portal del Casetero).
-4. **Contraseña:** 
-   - *Caseta nueva:* Escribe una contraseña segura (mínimo 6 caracteres). Luego, deberás proporcionarle esta contraseña al casetero.
-   - *Modificar caseta existente:* Si solo estás cambiando el nombre o habilitando la caseta, deja este campo **vacío**. Si el dueño ha olvidado su clave y te pide una nueva, escríbela aquí para sobreescribirla.
-
-### Mostrar/Ocultar del mapa (Habilitar y Deshabilitar)
-*   Botón Verde **HABILITAR:** Activa la caseta. Esto significa que aparecerá dibujada y coloreada en el Mapa Interactivo Público que usan los ciudadanos.
-*   Botón Rojo **DESHABILITAR:** Oculta la caseta temporal o permanentemente. Útil si la caseta tiene problemas, no se monta este año o hay errores en sus datos.
-
-### Guardar Cambios de Credenciales
-*   Botón Azul **ACTUALIZAR:** Una vez hayas revisado el nombre, el correo y la contraseña, debes hacer clic aquí obligatoriamente. Verás un cartel verde abajo que dirá "Actualizado" confirmando que el dueño ya tiene acceso.
-
----
-
-## 4. Pestaña 2: Editar (Diseño de la Ficha Pública)
-
-Esta pestaña te permite actuar como "diseñador" de la ficha que todos los visitantes verán en la app web de la feria al pulsar sobre una caseta en el mapa. 
-
-*Requisito: Antes de usar esta pestaña, debes haber buscado un Número de Caseta válido en la pestaña anterior (Credenciales).*
-
-### 4.1 Selección de Etiquetas (Tags)
-Las etiquetas sirven para que los ciudadanos sepan qué ambiente tiene la caseta de un solo vistazo.
-- Verás un listado de "píldoras" con palabras (ej: Pública, Tradicional, Copas, Comida).
-- Haz clic sobre las que correspondan a esta caseta. Cambiarán a un color azul oscuro cuando estén seleccionadas.
-
-### 4.2 Subir Imagen de Portada
-Esta imagen es la carta de presentación de la caseta.
-1. Haz clic sobre la franja donde pone **"Imagen de la Caseta"** (acompañada del icono de una foto).
-2. Se abrirá el explorador de archivos de tu ordenador o móvil. Elige la foto.
-3. **Restricción de Formato:** El sistema es inteligente. Si intentas subir una foto hecha en vertical (más alta que ancha), mostrará un mensaje de error rojo y la rechazará. **Solo se admiten fotos horizontales (apaisadas)** para que el diseño del mapa cuadre perfectamente.
-4. Si te equivocas de foto, pulsa el botón rojo **"ELIMINAR"** que aparecerá debajo de la miniatura para quitarla.
-
-### 4.3 Descripción del Ambiente
-El cuadro de texto inferior es libre. Puedes escribir los precios de las bebidas, si hay menú especial, la historia de la peña, etc.
-
-### 4.4 Programación Oficial (Día a Día)
-Si la caseta tiene conciertos, actuaciones infantiles o comidas populares, aquí es donde se organizan:
-1. Verás unos botones correspondientes a los días de la feria: **Día 20, Día 21, ..., Día 28**. Haz clic en el día exacto donde va a ocurrir el evento.
-2. En la caja que dice **"Hora"**, escribe en formato militar o normal (ej: `14:00` o `17:30`).
-3. En la caja **"Actividad"**, escribe de qué trata (ej: `Concierto de Flamenquito`).
-4. Pulsa el botón verde **"Añadir Evento"**.
-5. El evento aparecerá en la lista de arriba. Si te equivocas, pulsa el botón rojo de la **papelera** a su derecha para borrarlo al instante.
-
-### Guardar la Ficha
-*   Botón Azul **GUARDAR INFORMACIÓN:** Es imperativo hacer clic aquí antes de irte. Si cambias de pestaña o cierras el navegador sin guardarlo, todo el trabajo de fotos y eventos se perderá.
+### B. Colección `feria` (Información de la Feria)
+Contiene 56 documentos estáticos (`p01` a `p56`) para las casetas de la feria, además del documento de control global de `etiquetas`.
+*   **Propósito:** Almacena la ficha pública, imágenes de portada (en Base64 comprimido), estado de visibilidad en el mapa, tags de ambiente y la programación por días.
+*   **Campos:**
+    ```json
+    {
+      "numero": "1",
+      "nombre": "EL PITO",
+      "descripcion": "Descripción del ambiente de la caseta...",
+      "imagen": "data:image/jpeg;base64,...",
+      "portada_url": "data:image/jpeg;base64,...",
+      "estatus": true,
+      "etiquetas": ["Pública", "Comida", "Familiar"],
+      "programacion": {
+        "Día 20": [{"hora": "14:00", "actividad": "Concierto Flamenquito"}],
+        "Día 21": [],
+        ...
+        "Día 28": []
+      }
+    }
+    ```
+    *Nota: Se ha depurado el campo duplicado `ownerId` de esta colección utilizando `deleteField()` en los procesos de guardado para centralizar las relaciones en la colección `usuario`.*
 
 ---
 
-## 5. Pestaña 3: Etiquetas (El Diccionario de la Feria)
+## 2. Reglas de Seguridad en Firebase Firestore
 
-Esta herramienta es muy poderosa porque modifica el catálogo global. Afecta a TODAS las casetas y a las opciones que ven los propios caseteros en sus paneles privados.
+Para asegurar la integridad de la base de datos sin un servidor intermedio, debes implementar las siguientes reglas en la consola de Firebase Firestore. Estas reglas garantizan que el administrador y los usuarios tengan permisos estrictos basados en sus roles:
 
-### Eliminar Etiquetas Obsoletas
-- En el bloque superior verás el listado de todas las etiquetas activas. Si, por ejemplo, decides que la etiqueta "Discoteca" ya no tiene sentido, pulsa la "X" roja a su derecha. Desaparecerá de las opciones para todo el mundo.
+```javascript
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
 
-### Crear Nuevas Etiquetas
-- Si este año se inaugura una nueva temática, ve a la caja inferior donde dice "Nombre de la nueva etiqueta".
-- Escribe, por ejemplo, "Concurso de Tapas".
-- Pulsa el botón verde **"Añadir Etiqueta"**. Verás cómo sube automáticamente a la lista superior.
+    // 1. Reglas para la colección 'usuario'
+    match /usuario/{uid} {
+      // Lectura: El Administrador Supremo y el propio casetero autenticado
+      allow read: if request.auth != null && (
+        request.auth.uid == "Zl0KUSFsvmNS19yjckiZ0n4VIig2" || 
+        request.auth.uid == uid
+      );
+      // Escritura: Únicamente el Administrador Supremo tiene permisos de administración directa
+      allow write: if request.auth != null && 
+        request.auth.uid == "Zl0KUSFsvmNS19yjckiZ0n4VIig2";
+    }
 
-### Confirmar Cambios del Diccionario
-*   Botón Azul **GUARDAR ETIQUETAS:** ¡El paso más olvidado! Tras añadir o borrar palabras, debes hacer clic obligatoriamente en este botón final para que los cambios se guarden en el "cerebro" (la base de datos) del sistema.
+    // 2. Reglas para la colección 'feria' (las casetas p01-p56 y etiquetas)
+    match /feria/{documento} {
+      // Lectura: Público general (el mapa de la feria es de libre lectura)
+      allow read: isTrue;
+      
+      // Escritura: 
+      // A. El Administrador Supremo tiene control total.
+      // B. Un casetero autenticado puede modificar los datos de su propia caseta (descripcion, imagen, programacion)
+      //    siempre que el documento 'usuario/{uid}' coincida con el documento de la caseta solicitado.
+      allow write: if request.auth != null && (
+        request.auth.uid == "Zl0KUSFsvmNS19yjckiZ0n4VIig2" ||
+        get(/databases/$(database)/documents/usuario/$(request.auth.uid)).data.casetaId == documento
+      );
+    }
+
+    // 3. Reglas para la colección de validación del Administrador
+    match /admin_only/verificar {
+      // Solo el Administrador Supremo puede leer este documento para verificar su rol al iniciar sesión
+      allow read: if request.auth != null && request.auth.uid == "Zl0KUSFsvmNS19yjckiZ0n4VIig2";
+      allow write: if false;
+    }
+  }
+}
+```
 
 ---
 
-## 6. Solución a Problemas Comunes
+## 3. Flujos de Trabajo e Implementación de Código
 
-1. **"Acceso Denegado" al iniciar sesión:** Asegúrate de estar usando un correo designado como administrador. Si eres un casetero normal, debes usar el portal de caseteros, no este panel.
-2. **"Las imágenes en formato vertical no están permitidas":** Recorta la foto en tu ordenador o móvil para que sea horizontal, o haz una foto nueva apaisada.
-3. **No me llega el código 2FA:** Revisa tu carpeta de *Spam* o *Correo no deseado*. El código caduca en 24 horas, si expira, simplemente vuelve a intentar iniciar sesión para forzar el envío de un correo nuevo.
-4. **He cambiado los días de programación pero no salen:** Es posible que no hayas hecho clic en el botón azul gigante de "GUARDAR INFORMACIÓN" situado debajo de la sección de eventos. Todo cambio requiere confirmación manual.
+### A. Flujo de Acceso del Casetero (Rama `Casetero`)
+
+Cuando un casetero inicia sesión con su correo y contraseña, el frontend realiza una doble comprobación en tiempo real para asignarle su caseta sin usar intermediarios:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    Casetero Portal->>Firebase Auth: signInWithEmailAndPassword(email, password)
+    Firebase Auth-->>Casetero Portal: ID Token / User Credentials (UID)
+    Casetero Portal->>Firestore (usuario): getDoc(doc(db, "usuario", UID))
+    alt Mapeo existente en Firestore
+        Firestore (usuario)-->>Casetero Portal: { casetaId, email }
+    else Relación no cacheada (Búsqueda por email)
+        Casetero Portal->>Firestore (usuario): query(where email == user.email)
+        Firestore (usuario)-->>Casetero Portal: Documento (casetaId)
+        Casetero Portal->>Firestore (usuario): setDoc(doc(db, "usuario", UID), { casetaId, email }) (Cachear)
+    end
+    Casetero Portal->>Casetero Portal: Carga del Dashboard con casetaId correspondiente
+```
+
+### B. Gestión de Credenciales en el Administrador (Rama `Administrador`)
+
+Para crear y gestionar accesos de caseteros sin un backend, el panel de administración implementa un **diseño de App Secundaria de Firebase en memoria**. Esto evita que al crear o validar un casetero, la sesión del administrador activo sea interrumpida:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    Admin Panel->>Firestore (usuario): query(where casetaId == num)
+    Firestore (usuario)-->>Admin Panel: Mapeo anterior (oldUID)
+    alt Contraseña especificada (Registro/Actualización)
+        Admin Panel->>Firebase Auth (App en memoria): createUserWithEmailAndPassword(email, password)
+        alt Registro exitoso (Usuario nuevo)
+            Firebase Auth (App en memoria)-->>Admin Panel: New Credentials (UID)
+        else Correo ya existe (auth/email-already-in-use)
+            Admin Panel->>Firebase Auth (App en memoria): signInWithEmailAndPassword(email, password)
+            Firebase Auth (App en memoria)-->>Admin Panel: Existing Credentials (UID)
+        end
+        Admin Panel->>Firebase Auth (App en memoria): signOut() (limpieza de memoria)
+        
+        Admin Panel->>Firestore (usuario): deleteDoc(oldUID) (Borrar mapeo anterior)
+        Admin Panel->>Firestore (usuario): setDoc(usuario/{UID}, { casetaId, email }) (Escribir nuevo UID)
+    end
+    Admin Panel->>Firestore (feria): setDoc(feria/{num}, { nombre, ownerId: deleteField() }) (Elimina ownerId)
+    Admin Panel-->>Admin: Notificación de guardado correcto
+```
+
+---
+
+## 4. Estructura del Servidor en Kali PC
+
+La máquina física con Kali Linux sirve los tres portales de la feria de forma paralela en puertos independientes mediante **Nginx**.
+
+### A. Estructura de Directorios en `/var/www/`
+```
+/var/www/feria/
+├── publico/         <-- Rama 'Publico' (Servido en el Puerto 80)
+│   ├── index.html
+│   ├── script.js
+│   └── style.css
+├── casetero/        <-- Rama 'Casetero' (Servido en el Puerto 8080)
+│   ├── index.html
+│   ├── script.js
+│   └── style.css
+└── administrador/   <-- Rama 'Administrador' (Servido en el Puerto 8081)
+    ├── index.html
+    ├── script.js
+    └── style.css
+```
+
+### B. Configuración de Virtual Hosts de Nginx
+Crea el archivo `/etc/nginx/sites-available/feria-local` con la siguiente configuración:
+
+```nginx
+# 1. Mapa Público (Puerto 80)
+server {
+    listen 80;
+    server_name localhost;
+    root /var/www/feria/publico;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
+# 2. Portal Caseteros (Puerto 8080)
+server {
+    listen 8080;
+    server_name localhost;
+    root /var/www/feria/casetero;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
+# 3. Panel Administrador (Puerto 8081)
+server {
+    listen 8081;
+    server_name localhost;
+    root /var/www/feria/administrador;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+```
+
+Habilita la configuración y deshabilita la predeterminada:
+```bash
+sudo ln -sf /etc/nginx/sites-available/feria-local /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
+```
+
+### C. Arranque Automático en el Sistema
+Habilita los servicios del sistema para que inicien automáticamente en cada encendido y reinicio del PC de Kali:
+```bash
+# Servidor Web Nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx
+
+# Servidor SSH (Para despliegue remoto)
+sudo systemctl enable ssh
+sudo systemctl start ssh
+```
+
+### D. Configuración de Permisos
+Aplica los permisos del servidor para asegurar que Nginx pueda servir las páginas sin errores de tipo *403 Forbidden*:
+```bash
+sudo chown -R $USER:www-data /var/www/feria
+sudo find /var/www/feria -type d -exec chmod 755 {} \;
+sudo find /var/www/feria -type f -exec chmod 644 {} \;
+```
+
+---
+
+## 5. Procedimiento de Despliegue de Cambios (PowerShell Windows -> Kali)
+
+Si estás trabajando en local en tu máquina Windows y quieres pasar los cambios directamente a tu Kali sin tocar GitHub, usa el script de PowerShell `desplegar-kali.ps1` que se encuentra en la raíz del proyecto. Este script:
+1. Genera paquetes `.tar` de las tres ramas locales (`Publico`, `Casetero`, `Administrador`).
+2. Los transfiere por `scp` al directorio `/tmp` de Kali.
+3. Se conecta vía `ssh`, extrae los paquetes en los directorios de Nginx y configura los permisos necesarios automáticamente.
+
+Para ejecutarlo:
+```powershell
+./desplegar-kali.ps1
+```
+
+---
+
+## 6. Solución a Problemas Comunes (Troubleshooting)
+
+1. **Error de autenticación (`auth/unauthorized-domain`) al acceder desde otro PC de la red local:**
+   * **Causa:** Firebase Authentication bloquea inicios de sesión provenientes de dominios o IPs no registrados por seguridad.
+   * **Solución:** Accede a la Consola de Firebase -> Authentication -> Settings -> Authorized Domains. Añade la dirección IP de tu Kali PC (ej: `192.168.1.15`).
+
+2. **Error al intentar actualizar la caseta: "Si cambias el correo de la caseta, debes especificar una contraseña..."**
+   * **Causa:** Has introducido un correo nuevo para una caseta pero no has rellenado el campo de contraseña. Sin contraseña, el cliente no puede registrar la cuenta en Authentication y obtener el UID.
+   * **Solución:** Si estás cambiando de correo/dueño, debes rellenar obligatoriamente una contraseña inicial en el campo correspondiente del panel.
+
+3. **El casetero no puede acceder a su panel tras cambiar la contraseña:**
+   * **Causa:** Si el usuario ya estaba registrado en Firebase Authentication y se intenta registrar de nuevo con el mismo correo pero distinta contraseña, el panel bloqueará el cambio a menos que la contraseña introducida coincida con la cuenta existente en Firebase Auth (esto se hace para evitar secuestro de cuentas).
+   * **Solución:** Si deseas cambiar la contraseña de una cuenta de casetero que ya está registrada en Firebase, debes realizar el cambio directamente en el panel de **Firebase Console -> Authentication -> Users**.
