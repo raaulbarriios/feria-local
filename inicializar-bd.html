@@ -148,7 +148,7 @@
     <!-- Integración con la configuración existente -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyDHAJj-rSSNbywkow7nkGInF171kvdwv_I",
@@ -173,6 +173,7 @@
             let icon = '<i class="fa-solid fa-chevron-right"></i>';
             if (type === 'success') icon = '<i class="fa-solid fa-circle-check"></i>';
             if (type === 'error') icon = '<i class="fa-solid fa-circle-xmark"></i>';
+            if (type === 'info' && msg.includes("Omitiendo")) icon = '<i class="fa-solid fa-angles-right"></i>';
             
             item.innerHTML = `${icon} <span>${msg}</span>`;
             consoleLog.appendChild(item);
@@ -186,20 +187,36 @@
             consoleLog.innerHTML = '';
 
             log("🚀 Iniciando la conexión y creación de la base de datos...");
+            const sleep = ms => new Promise(res => setTimeout(res, ms));
 
             try {
                 // 1. Crear documento de etiquetas predefinidas
-                log("🏷️ Creando etiquetas predefinidas...");
-                await setDoc(doc(db, "feria", "etiquetas"), {
-                    predefinidas: ["Pública", "Privada", "Tradicional", "Moderna", "Familiar", "Juvenil", "Comida", "Copas"]
-                });
-                log("Etiquetas globales configuradas.", "success");
+                log("🏷️ Comprobando etiquetas predefinidas...");
+                const etiquetasSnap = await getDoc(doc(db, "feria", "etiquetas"));
+                if (!etiquetasSnap.exists()) {
+                    log("🏷️ Creando etiquetas predefinidas...");
+                    await setDoc(doc(db, "feria", "etiquetas"), {
+                        predefinidas: ["Pública", "Privada", "Tradicional", "Moderna", "Familiar", "Juvenil", "Comida", "Copas"]
+                    });
+                    log("Etiquetas globales configuradas.", "success");
+                } else {
+                    log("🏷️ Las etiquetas globales ya existen. Omitiendo.", "info");
+                }
+                await sleep(150);
 
                 // 2. Crear las 56 casetas (p01 a p56)
-                log("🎪 Creando documentos para las 56 casetas...");
+                log("🎪 Comprobando documentos de casetas (p01 - p56)...");
                 for (let i = 1; i <= 56; i++) {
                     const id = 'p' + i.toString().padStart(2, '0');
+                    
+                    const casetaSnap = await getDoc(doc(db, "feria", id));
+                    if (casetaSnap.exists()) {
+                        log(`Caseta ${id} ya existe. Omitiendo.`, "info");
+                        continue;
+                    }
+
                     const nombre = id === "p01" ? "EL PITO" : `Caseta ${i}`;
+                    log(`🎪 Inicializando ${id} (${nombre})...`);
                     
                     await setDoc(doc(db, "feria", id), {
                         numero: i.toString(),
@@ -220,17 +237,24 @@
                             "Día 28": []
                         }
                     });
-                    log(`Caseta ${id} inicializada (${nombre}).`);
+                    log(`Caseta ${id} inicializada.`, "success");
+                    await sleep(150);
                 }
-                log("Las 56 casetas fueron creadas exitosamente.", "success");
+                log("Todas las casetas verificadas e inicializadas.", "success");
 
                 // 3. Crear el usuario administrador de prueba (UID asignado a caseta p01)
-                log("👤 Vinculando usuario raulbarrios@gmail.com...");
-                await setDoc(doc(db, "usuario", "Xog28SLQYnROqv4DlKrZcPWZLz23"), {
-                    casetaId: "p01",
-                    email: "raulbarrios@gmail.com"
-                });
-                log("Usuario vinculado a caseta p01 correctamente.", "success");
+                log("👤 Comprobando vinculación de usuario...");
+                const userSnap = await getDoc(doc(db, "usuario", "Xog28SLQYnROqv4DlKrZcPWZLz23"));
+                if (!userSnap.exists()) {
+                    log("👤 Vinculando usuario raulbarrios@gmail.com...");
+                    await setDoc(doc(db, "usuario", "Xog28SLQYnROqv4DlKrZcPWZLz23"), {
+                        casetaId: "p01",
+                        email: "raulbarrios@gmail.com"
+                    });
+                    log("Usuario vinculado a caseta p01 correctamente.", "success");
+                } else {
+                    log("👤 Usuario ya vinculado. Omitiendo.", "info");
+                }
 
                 log("🎉 ¡El proceso de inicialización ha terminado con éxito!", "success");
                 btn.innerHTML = '<i class="fa-solid fa-circle-check"></i> Completado';
