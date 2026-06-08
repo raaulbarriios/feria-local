@@ -22,6 +22,4 @@ const analytics = getAnalytics(app);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-const WORKER_URL = "https://eventos-ayuntamiento-auth.rbarfue160305.workers.dev";
-
-export { app, analytics, db, auth, WORKER_URL };
+export { app, analytics, db, auth };

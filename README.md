@@ -4,38 +4,20 @@ Esta documentación proporciona una guía de uso completa y funcional para los p
 
 ---
 
-## 🔐 1. Flujo de Acceso Seguro (Autenticación y Doble Factor)
+## 🔐 1. Flujo de Acceso Seguro (Autenticación Directa)
 
-Para salvaguardar la integridad de la base de datos municipal, el acceso al portal del casetero está protegido por un sistema de **doble factor de autenticación (2FA)**.
+El acceso al portal del casetero se realiza de forma directa mediante autenticación local conectada a Firebase.
 
 ```mermaid
 graph TD
     A[Formulario de Acceso] -->|1. Email y Contraseña| B{Validación Firebase}
-    B -->|Credenciales OK| C[Solicitud de PIN 2FA]
-    C -->|Generación de PIN en Worker| D[Envío de PIN por Correo]
-    D -->|2. Escribir PIN de 6 dígitos| E{Verificación en Worker}
-    E -->|Código Válido| F[Dashboard de Gestión]
-    E -->|PIN Inválido o Expirado| C
+    B -->|Credenciales OK| C[Dashboard de Gestión]
 ```
 
-### Paso A: Credenciales Básicas
+### Acceso
 1. Abre el portal en tu navegador.
 2. Introduce tu **Correo Electrónico** y **Contraseña** suministrada por el Ayuntamiento.
-3. Presiona **"Iniciar Sesión"**.
-
-### Paso B: Validación por Doble Factor (PIN de 6 dígitos)
-1. Al validar tus credenciales, el sistema te redirigirá automáticamente a la pantalla de verificación 2FA y enviará un código numérico temporal de **6 dígitos** a tu buzón de correo.
-2. Introduce el código en la casilla segmentada.
-3. Presiona **"Verificar Código"** para acceder a tu panel de control.
-
-> [!WARNING]
-> **Caducidad e Intentos Máximos del Código**:
-> * Cada código enviado tiene un **límite de expiración de 24 horas**.
-> * Dispones de un **máximo de 3 intentos** para introducir el código. Si fallas las 3 oportunidades, el código quedará bloqueado y destruido automáticamente por seguridad, obligándote a solicitar uno nuevo.
-
-> [!NOTE]
-> **Tolerancia a fallos en Modo de Prueba (Sandbox)**:
-> Si la API de envío de correos experimenta bloqueos temporales por límites del Sandbox, el portal te mostrará una **advertencia en verde**. Podrás completar tu prueba recuperando el código temporal de verificación directamente desde la base de datos de Firestore (colección `codigos_2fa` con tu UID) sin quedar atascado.
+3. Presiona **"Iniciar Sesión"** para acceder directamente a tu panel de control.
 
 ---
 

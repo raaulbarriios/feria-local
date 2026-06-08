@@ -4,9 +4,9 @@
  * mediante Cloudflare Workers, la edición interactiva de datos de la caseta,
  * etiquetado local y el planificador dinámico de eventos diarios (Día 20 al Día 28).
  */
-import { db, auth, WORKER_URL } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';
 import { signInWithEmailAndPassword, signOut, setPersistence, inMemoryPersistence } from "firebase/auth";
-import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteField } from "firebase/firestore";
+import { collection, query, where, getDocs, doc, getDoc, updateDoc, deleteField, setDoc } from "firebase/firestore";
 
 // --- 1. CONFIGURACIÓN Y MAPEADO DE REFERENCIAS AL DOM ---
 const $ = id => document.getElementById(id);
@@ -67,11 +67,7 @@ const showMsg = (txt, ok) => {
     setTimeout(() => form.msg.style.display = 'none', 4000);
 };
 
-// --- 2. FLUJO DE AUTENTICACIÓN CON DOBLE FACTOR (2FA) ---
-const login2faForm = $('login2faForm');
-const login2faErrorMsg = $('login2faErrorMsg');
-
-// Maneja el primer paso del Login (Validación en Firebase y solicitud del código 2FA)
+// --- 2. FLUJO DE AUTENTICACIÓN LOCAL DIRECTA ---
 form.login.onsubmit = async e => {
     e.preventDefault();
     form.err.style.display = 'none';
@@ -86,66 +82,9 @@ form.login.onsubmit = async e => {
             return init();
         }
         const userCredential = await signInWithEmailAndPassword(auth, mail, pass);
-        form.btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando código...';
+        form.btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accediendo...';
         
-        // Petición al endpoint seguro de Cloudflare Workers para el despacho del correo 2FA
-        const idToken = await userCredential.user.getIdToken(true);
-        const response = await fetch(`${WORKER_URL}/api/enviar-codigo-2fa`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` }
-        });
-        const resData = await response.json();
-        if (!response.ok) throw new Error(resData.error || "Error al enviar el código de verificación.");
-        
-        // Transición visual hacia el panel de ingreso de 6 dígitos del 2FA
-        form.login.classList.add('hidden');
-        login2faForm.classList.remove('hidden');
-        if (resData.emailSent === false) {
-            login2faErrorMsg.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${resData.message}`;
-            login2faErrorMsg.className = 'statusMsg error';
-            login2faErrorMsg.style.display = 'block';
-        } else {
-            login2faErrorMsg.style.display = 'none';
-        }
-        $('twoFactorInput').value = '';
-        $('twoFactorInput').focus();
-    } catch (err) {
-        await signOut(auth);
-        form.err.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${err.message || "Credenciales incorrectas."}`;
-        form.err.style.display = 'block';
-    } finally {
-        form.btn.disabled = false;
-        form.btn.innerHTML = 'Iniciar Sesión';
-    }
-};
-
-// Segundo paso del Login: Validación del PIN numérico de seguridad de 6 dígitos
-login2faForm?.addEventListener('submit', async e => {
-    e.preventDefault();
-    login2faErrorMsg.style.display = 'none';
-    const codeVal = $('twoFactorInput').value.trim();
-    if (codeVal.length !== 6) {
-        login2faErrorMsg.textContent = "El código debe tener exactamente 6 dígitos.";
-        login2faErrorMsg.style.display = 'block';
-        return;
-    }
-    const btn = e.target.querySelector('.submitBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
-    try {
-        const user = auth.currentUser;
-        if (!user) throw new Error("La sesión ha expirado o es inválida. Por favor, vuelve a iniciar sesión.");
-        
-        // Valida el token 2FA llamando a la API de Cloudflare Workers
-        const idToken = await user.getIdToken(true);
-        const response = await fetch(`${WORKER_URL}/api/verificar-codigo-2fa`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-            body: JSON.stringify({ codigo: codeVal })
-        });
-        const resData = await response.json();
-        if (!response.ok) throw new Error(resData.error || "Código de verificación incorrecto.");
-        
+        const user = userCredential.user;
         // Recupera el identificador de caseta vinculado a la cuenta del propietario en la base de datos
         let casetaId = null;
         const userSnap = await getDoc(doc(db, "usuario", user.uid));
@@ -158,75 +97,25 @@ login2faForm?.addEventListener('submit', async e => {
         }
         if (casetaId) {
             sessionStorage.setItem('casetaId', casetaId);
-            login2faForm.classList.add('hidden');
-            form.login.classList.remove('hidden');
+            // Cachear la relación localmente para un acceso más rápido
+            try {
+                await setDoc(doc(db, "usuario", user.uid), { email: user.email, casetaId: casetaId });
+            } catch (err) {
+                console.warn("No se pudo cachear la relación de usuario/caseta en Firestore:", err);
+            }
             init();
         } else {
             throw new Error("No tienes ninguna caseta asignada a tu cuenta. Contacta con el administrador.");
         }
     } catch (err) {
-        login2faErrorMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${err.message}`;
-        login2faErrorMsg.style.display = 'block';
-        // Auto-redirecciona al formulario si hay un problema crítico con el código expirado
-        if (err.message.includes("expirado") || err.message.includes("máximo de intentos") || err.message.includes("sesión ha expirado")) {
-            setTimeout(async () => {
-                await signOut(auth);
-                login2faForm.classList.add('hidden');
-                form.login.classList.remove('hidden');
-                form.err.style.display = 'none';
-            }, 3000);
-        }
+        await signOut(auth);
+        form.err.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${err.message || "Credenciales incorrectas."}`;
+        form.err.style.display = 'block';
     } finally {
-        btn.disabled = false;
-        btn.innerHTML = 'Verificar Código';
+        form.btn.disabled = false;
+        form.btn.innerHTML = 'Iniciar Sesión';
     }
-});
-
-// Acción de volver al login inicial cancelando la sesión intermedia
-$('backToLoginBtn')?.addEventListener('click', async () => {
-    await signOut(auth);
-    login2faForm.classList.add('hidden');
-    form.login.classList.remove('hidden');
-    form.err.style.display = 'none';
-});
-
-// Acción para reenviar el código 2FA
-$('resend2faBtn')?.addEventListener('click', async () => {
-    const resendBtn = $('resend2faBtn');
-    const origText = resendBtn.textContent;
-    resendBtn.style.pointerEvents = 'none';
-    resendBtn.textContent = 'Enviando...';
-    login2faErrorMsg.style.display = 'none';
-    try {
-        const user = auth.currentUser;
-        if (!user) throw new Error("No hay un usuario activo. Por favor, vuelve a iniciar sesión.");
-        const idToken = await user.getIdToken(true);
-        const response = await fetch(`${WORKER_URL}/api/enviar-codigo-2fa`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` }
-        });
-        const resData = await response.json();
-        if (!response.ok) throw new Error(resData.error || "Error al reenviar el código.");
-        
-        if (resData.emailSent === false) {
-            login2faErrorMsg.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${resData.message}`;
-            login2faErrorMsg.className = 'statusMsg error';
-            login2faErrorMsg.style.display = 'block';
-        } else {
-            login2faErrorMsg.textContent = "Código reenviado con éxito.";
-            login2faErrorMsg.className = 'statusMsg success';
-            login2faErrorMsg.style.display = 'block';
-            setTimeout(() => { login2faErrorMsg.style.display = 'none'; }, 3000);
-        }
-    } catch (err) {
-        login2faErrorMsg.className = 'statusMsg error';
-        login2faErrorMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${err.message}`;
-        login2faErrorMsg.style.display = 'block';
-    } finally {
-        resendBtn.style.pointerEvents = 'auto';
-        resendBtn.textContent = origText;
-    }
-});
+};
 
 // --- 3. CARGA DE DATOS Y GESTIÓN DE EVENTOS DIARIOS ---
 let currentCasetaData = null;
