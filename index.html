@@ -272,7 +272,7 @@
 
         <main class="cards-grid">
             <!-- CARD 1: MAPA PÚBLICO -->
-            <a id="link-publico" href="#" class="card card-publico">
+            <a href="/publico/" class="card card-publico">
                 <div class="icon-box">
                     <i class="fa-solid fa-map-location-dot"></i>
                 </div>
@@ -284,7 +284,7 @@
             </a>
 
             <!-- CARD 2: PORTAL CASETEROS -->
-            <a id="link-casetero" href="#" class="card card-casetero">
+            <a href="/casetero/" class="card card-casetero">
                 <div class="icon-box">
                     <i class="fa-solid fa-store"></i>
                 </div>
@@ -296,7 +296,7 @@
             </a>
 
             <!-- CARD 3: PANEL ADMINISTRADOR -->
-            <a id="link-admin" href="#" class="card card-admin">
+            <a href="/administrador/" class="card card-admin">
                 <div class="icon-box">
                     <i class="fa-solid fa-user-shield"></i>
                 </div>
@@ -312,17 +312,5 @@
             <p>© 2026 Ayuntamiento de Algeciras. Todos los derechos reservados.</p>
         </footer>
     </div>
-
-    <!-- Script dinámico para asignar URLs basándose en el hostname actual y los puertos -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const hostname = window.location.hostname || 'localhost';
-            
-            // Asignar enlaces basados en la arquitectura multi-puerto
-            document.getElementById('link-publico').href = `http://${hostname}:8082/`;
-            document.getElementById('link-casetero').href = `http://${hostname}:8080/`;
-            document.getElementById('link-admin').href = `http://${hostname}:8081/`;
-        });
-    </script>
 </body>
 </html>
