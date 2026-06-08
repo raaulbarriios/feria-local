@@ -163,76 +163,70 @@ sequenceDiagram
 
 ## 4. Estructura del Servidor en Kali PC
 
-La máquina física con Kali Linux sirve los tres portales de la feria de forma paralela en puertos independientes mediante **Nginx**.
+La máquina física con Kali Linux sirve todos los portales de la feria de forma paralela en el **Puerto 80** mediante subdirectorios (rutas relativas) gestionados por **Nginx**.
 
 ### A. Estructura de Directorios en `/var/www/`
 ```
 /var/www/feria/
-├── main/            <-- Rama 'main' (Servido en el Puerto 80 - Selector de Portales)
+├── main/            <-- Rama 'main' (Servido en la raíz '/' - Selector de Portales)
 │   ├── index.html
 │   └── fotos/
-├── casetero/        <-- Rama 'Casetero' (Servido en el Puerto 8080)
+├── casetero/        <-- Rama 'Casetero' (Servido en '/casetero/')
 │   ├── index.html
 │   ├── script.js
 │   └── style.css
-├── administrador/   <-- Rama 'Administrador' (Servido en el Puerto 8081)
+├── administrador/   <-- Rama 'Administrador' (Servido en '/administrador/')
 │   ├── index.html
 │   ├── script.js
 │   └── style.css
-└── publico/         <-- Rama 'Publico' (Servido en el Puerto 8082 - Mapa Ciudadano)
+└── publico/         <-- Rama 'Publico' (Servido en '/publico/' - Mapa Ciudadano)
     ├── index.html
     ├── script.js
     └── style.css
 ```
 
 ### B. Configuración de Virtual Hosts de Nginx
-Crea el archivo `/etc/nginx/sites-available/feria-local` con la siguiente configuración:
+Edita el archivo `/etc/nginx/sites-available/feria-local` con la siguiente configuración:
 
 ```nginx
-# 1. Selector de Portales / Landing Page (Puerto 80)
 server {
     listen 80;
     server_name localhost;
-    root /var/www/feria/main;
-    index index.html;
 
+    # 1. Selector de Portales / Landing Page (Ruta Raíz)
     location / {
+        root /var/www/feria/main;
+        index index.html;
         try_files $uri $uri/ =404;
     }
-}
 
-# 2. Portal Caseteros (Puerto 8080)
-server {
-    listen 8080;
-    server_name localhost;
-    root /var/www/feria/casetero;
-    index index.html;
-
-    location / {
+    # 2. Portal Caseteros (Ruta /casetero/)
+    location = /casetero {
+        return 301 $scheme://$http_host/casetero/;
+    }
+    location /casetero/ {
+        alias /var/www/feria/casetero/;
+        index index.html;
         try_files $uri $uri/ =404;
     }
-}
 
-# 3. Panel Administrador (Puerto 8081)
-server {
-    listen 8081;
-    server_name localhost;
-    root /var/www/feria/administrador;
-    index index.html;
-
-    location / {
+    # 3. Panel Administrador (Ruta /administrador/)
+    location = /administrador {
+        return 301 $scheme://$http_host/administrador/;
+    }
+    location /administrador/ {
+        alias /var/www/feria/administrador/;
+        index index.html;
         try_files $uri $uri/ =404;
     }
-}
 
-# 4. Mapa Público (Puerto 8082)
-server {
-    listen 8082;
-    server_name localhost;
-    root /var/www/feria/publico;
-    index index.html;
-
-    location / {
+    # 4. Mapa Público (Ruta /publico/)
+    location = /publico {
+        return 301 $scheme://$http_host/publico/;
+    }
+    location /publico/ {
+        alias /var/www/feria/publico/;
+        index index.html;
         try_files $uri $uri/ =404;
     }
 }
