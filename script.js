@@ -333,11 +333,22 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
         try {
+            // 1. Obtener el propietario actual de esta caseta para comprobar si ha cambiado el correo
+            let emailActual = "";
+            const oldUserSnap = await getDocs(query(collection(db, "usuario"), where("casetaId", "==", normalizeId(num))));
+            if (!oldUserSnap.empty) {
+                emailActual = oldUserSnap.docs[0].data().email || "";
+            }
+
+            // 2. Si el correo ha cambiado y no se ha especificado una contraseña, obligar a ponerla
+            if (cor !== emailActual && !pass) {
+                throw new Error("Si cambias el correo de la caseta, debes especificar una contraseña para registrar al nuevo usuario.");
+            }
+
             let userUid = null;
 
+            // 3. Crear el usuario en Authentication si se especifica contraseña
             if (pass) {
-                // Crear usuario en Firebase Authentication usando una app secundaria
-                // para evitar desconectar la sesión del administrador actual
                 const secondaryAppName = `SecondaryApp_${Date.now()}`;
                 const secondaryApp = initializeApp(app.options, secondaryAppName);
                 const secondaryAuth = getAuth(secondaryApp);
@@ -345,7 +356,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const secondaryCred = await createUserWithEmailAndPassword(secondaryAuth, cor, pass);
                     userUid = secondaryCred.user.uid;
-                    // Cerrar sesión en la app secundaria para limpiar memoria
                     await signOut(secondaryAuth);
                 } catch (authErr) {
                     if (authErr.code === 'auth/email-already-in-use') {
@@ -356,7 +366,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Buscar si ya existe este correo en la colección de usuarios para obtener su UID
+            // 4. Si no tenemos el UID porque no se especificó contraseña (pero el correo es el mismo),
+            // lo buscamos por email en la colección 'usuario' para no perder la relación.
             if (!userUid) {
                 const querySnap = await getDocs(query(collection(db, "usuario"), where("email", "==", cor)));
                 if (!querySnap.empty) {
@@ -364,21 +375,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Limpia y elimina relaciones duplicadas previas asociadas a esta caseta
-            const oldUserSnap = await getDocs(query(collection(db, "usuario"), where("casetaId", "==", normalizeId(num))));
-            for (const oldDoc of oldUserSnap.docs) {
-                await deleteDoc(doc(db, "usuario", oldDoc.id));
-            }
-
-            // Si tenemos un UID de usuario (creado ahora o buscado previamente), creamos/actualizamos la relación en Firestore
+            // 5. Solo si tenemos un UID válido, actualizamos la colección 'usuario'
             if (userUid) {
+                // Eliminar cualquier mapeo previo de esta caseta con otros UIDs
+                if (!oldUserSnap.empty) {
+                    for (const oldDoc of oldUserSnap.docs) {
+                        if (oldDoc.id !== userUid) {
+                            await deleteDoc(doc(db, "usuario", oldDoc.id));
+                        }
+                    }
+                }
+
+                // Crear/actualizar la relación en Firestore
                 await setDoc(doc(db, "usuario", userUid), {
                     casetaId: normalizeId(num),
                     email: cor
                 });
             }
 
-            // Actualiza la vinculación de propietario y limpia rastros legados de ownerEmail y ownerId en el documento de feria
+            // 6. Actualizar el nombre en la colección 'feria' (asegurando que no quede ownerId)
             await setDoc(doc(db, "feria", normalizeId(num)), { nombre: nom, ownerId: deleteField(), ownerEmail: deleteField() }, { merge: true });
             
             showStatus(pass ? "Caseta y Usuario creados correctamente" : "Actualizado", "success"); 
