@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Acceso - Feria de Algeciras</title>
+    <!-- Fuentes tipográficas y FontAwesome para iconos -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --card-bg: rgba(30, 41, 59, 0.45);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --font-main: 'Outfit', sans-serif;
+            
+            /* Curated Gradients */
+            --grad-blue: linear-gradient(135deg, #38bdf8, #1d4ed8);
+            --grad-emerald: linear-gradient(135deg, #34d399, #047857);
+            --grad-crimson: linear-gradient(135deg, #f87171, #b91c1c);
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Modern Background Blur Gradients */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            background: rgba(59, 130, 246, 0.15);
+            border-radius: 50%;
+            filter: blur(80px);
+            top: 10%;
+            left: 10%;
+            z-index: -1;
+        }
+
+        body::after {
+            content: '';
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 50%;
+            filter: blur(80px);
+            bottom: 10%;
+            right: 10%;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1100px;
+            width: 100%;
+            padding: 40px 20px;
+            box-sizing: border-box;
+            text-align: center;
+            z-index: 1;
+        }
+
+        /* Brand Header styling */
+        header {
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .logo-wrapper {
+            margin-bottom: 20px;
+        }
+
+        .logo-wrapper img {
+            height: 80px;
+            filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.2));
+            transition: transform 0.4s ease;
+        }
+
+        .logo-wrapper img:hover {
+            transform: scale(1.05);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #f8fafc, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-top: 10px;
+            font-weight: 400;
+        }
+
+        /* Portal Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+            perspective: 1000px;
+            animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) both 0.2s;
+        }
+
+        /* Portal Card Styling */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-decoration: none;
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: transparent;
+            transition: background 0.3s ease;
+        }
+
+        .card.card-publico::before { background: var(--grad-blue); }
+        .card.card-casetero::before { background: var(--grad-emerald); }
+        .card.card-admin::before { background: var(--grad-crimson); }
+
+        .card:hover {
+            transform: translateY(-8px);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Icon Container styling */
+        .icon-box {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 25px;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.2);
+        }
+
+        .card-publico .icon-box { background: var(--grad-blue); color: white; }
+        .card-casetero .icon-box { background: var(--grad-emerald); color: white; }
+        .card-admin .icon-box { background: var(--grad-crimson); color: white; }
+
+        .card:hover .icon-box {
+            transform: scale(1.1) rotate(2deg);
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            letter-spacing: -0.2px;
+        }
+
+        p.card-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 0 0 30px 0;
+            flex-grow: 1;
+        }
+
+        /* Premium Nav Link Button inside cards */
+        .nav-btn {
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-main);
+        }
+
+        .card-publico:hover .nav-btn { background: var(--grad-blue); border-color: transparent; box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2); }
+        .card-casetero:hover .nav-btn { background: var(--grad-emerald); border-color: transparent; box-shadow: 0 4px 12px rgba(52, 211, 153, 0.2); }
+        .card-admin:hover .nav-btn { background: var(--grad-crimson); border-color: transparent; box-shadow: 0 4px 12px rgba(248, 113, 113, 0.2); }
+
+        .nav-btn i {
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .nav-btn i {
+            transform: translateX(4px);
+        }
+
+        /* Footer styling */
+        footer {
+            margin-top: 80px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            animation: fadeIn 1s ease both 0.4s;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; }
+            .container { padding: 20px 10px; }
+            .card { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo-wrapper">
+                <!-- Fallback to placeholder if Algeciras logo isn't in main branch -->
+                <img id="logoImg" src="fotos/Logo algeciras color blanco texto derecha.png" alt="Ayuntamiento de Algeciras">
+            </div>
+            <h1>Feria Real de Algeciras</h1>
+            <p class="subtitle">Selecciona el portal de acceso al que deseas ingresar</p>
+        </header>
+
+        <main class="cards-grid">
+            <!-- CARD 1: MAPA PÚBLICO -->
+            <a id="link-publico" href="#" class="card card-publico">
+                <div class="icon-box">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                </div>
+                <h2>Mapa Público</h2>
+                <p class="card-desc">Visualiza el mapa de las casetas, consulta sus ubicaciones, ambientes y la programación oficial de eventos diarios.</p>
+                <div class="nav-btn">
+                    Acceder al Mapa <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </a>
+
+            <!-- CARD 2: PORTAL CASETEROS -->
+            <a id="link-casetero" href="#" class="card card-casetero">
+                <div class="icon-box">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+                <h2>Portal del Casetero</h2>
+                <p class="card-desc">Acceso privado para propietarios. Modifica la descripción, tags de ambiente, sube fotos y planifica las actividades diarias.</p>
+                <div class="nav-btn">
+                    Acceder al Portal <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </a>
+
+            <!-- CARD 3: PANEL ADMINISTRADOR -->
+            <a id="link-admin" href="#" class="card card-admin">
+                <div class="icon-box">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <h2>Panel de Administración</h2>
+                <p class="card-desc">Control municipal. Registra credenciales de acceso, gestiona etiquetas globales y controla la visibilidad en el mapa interactivo.</p>
+                <div class="nav-btn">
+                    Acceder al Panel <i class="fa-solid fa-arrow-right"></i>
+                </div>
+            </a>
+        </main>
+
+        <footer>
+            <p>© 2026 Ayuntamiento de Algeciras. Todos los derechos reservados.</p>
+        </footer>
+    </div>
+
+    <!-- Script dinámico para asignar URLs basándose en el hostname actual y los puertos -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const hostname = window.location.hostname || 'localhost';
+            
+            // Asignar enlaces basados en la arquitectura multi-puerto
+            document.getElementById('link-publico').href = `http://${hostname}:8082/`;
+            document.getElementById('link-casetero').href = `http://${hostname}:8080/`;
+            document.getElementById('link-admin').href = `http://${hostname}:8081/`;
+        });
+    </script>
+</body>
+</html>
