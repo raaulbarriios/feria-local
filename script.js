@@ -4,7 +4,7 @@
  * edición completa de información, etiquetas globales de la feria y normalización de la base de datos en Firebase Firestore.
  */
 
-import { db, auth, WORKER_URL } from './firebase-config.js';
+import { db, auth } from './firebase-config.js';
 import { doc, getDoc, setDoc, updateDoc, deleteField, collection, getDocs, query, where, deleteDoc } from "firebase/firestore";
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, inMemoryPersistence } from "firebase/auth";
 
@@ -323,7 +323,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- ACCIÓN: ACTUALIZAR CREDENCIALES ---
-    // Guarda el acceso, crea o actualiza cuentas llamando a la API segura de Cloudflare Workers
+    // Guarda el acceso actualizando directamente en la base de datos local
     $('saveAction').addEventListener('click', async () => {
         if (!checkSession()) return toggleView(false);
         const [num, nom, cor, pass] = [numIn, nomIn, corIn, passIn].map(i => i.value.trim());
@@ -333,36 +333,18 @@ document.addEventListener('DOMContentLoaded', () => {
         saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
 
         try {
-            const currentUser = await getCurrentUser();
-            if (!currentUser) throw new Error("Sesión de administrador no activa o expirada en Firebase.");
-            const idToken = await currentUser.getIdToken();
-            const reqBody = { email: cor };
             if (pass) {
-                if (pass.length < 6) throw new Error("La contraseña debe tener al menos 6 caracteres");
-                reqBody.password = pass;
+                showStatus("Contraseñas no se pueden editar en local. Cambie en Firebase Console", "error");
             }
-
-            // Realiza la petición segura para crear o re-establecer contraseñas
-            const response = await fetch(`${WORKER_URL}/api/actualizar-cuenta`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-                body: JSON.stringify(reqBody)
-            });
-            const resData = await response.json();
-            if (!response.ok) throw new Error(resData.error || "Error de comunicación con Cloudflare.");
-
-            const userUid = resData.uid;
-            if (!userUid) throw new Error("No se pudo obtener el UID de usuario.");
 
             // Limpia y elimina relaciones duplicadas previas asociadas a esta caseta
             const oldUserSnap = await getDocs(query(collection(db, "usuario"), where("casetaId", "==", normalizeId(num))));
             for (const oldDoc of oldUserSnap.docs) {
-                if (oldDoc.id !== userUid) await deleteDoc(doc(db, "usuario", oldDoc.id));
+                await deleteDoc(doc(db, "usuario", oldDoc.id));
             }
 
-            // Actualiza la vinculación de propietario y limpia rastros legados de ownerId
-            await setDoc(doc(db, "usuario", userUid), { email: cor, casetaId: normalizeId(num) });
-            await setDoc(doc(db, "feria", normalizeId(num)), { nombre: nom, ownerId: deleteField(), ownerEmail: deleteField() }, { merge: true });
+            // Actualiza la vinculación de propietario y limpia rastros legados de ownerEmail en el documento de feria
+            await setDoc(doc(db, "feria", normalizeId(num)), { nombre: nom, ownerId: cor, ownerEmail: deleteField() }, { merge: true });
             showStatus("Actualizado", "success"); passIn.value = '';
         } catch (e) { 
             showStatus("Error: " + e.message, "error");
